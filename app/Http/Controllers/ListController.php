@@ -270,10 +270,9 @@ class ListController extends AbstractBaseController {
 							break;
 						case 'style2':
 						default:
-							echo view('tables/surname', [
+							echo view('tables/surnames', [
 								'surnames' => $surns,
 								'route'    => $route,
-								'tree'     => $tree,
 							]);
 							break;
 					}
@@ -343,8 +342,8 @@ class ListController extends AbstractBaseController {
 
 		// @TODO convert this to use views
 		return $this->viewResponse('individual-list-page', [
-			'title'   => $title,
 			'content' => $html,
+			'title'   => $title,
 		]);
 	}
 
@@ -404,7 +403,6 @@ class ListController extends AbstractBaseController {
 			'pages'         => $pages,
 			'subdirs'       => $subdirs,
 			'title'         => I18N::translate('Media'),
-			'tree'          => $tree,
 		]);
 	}
 

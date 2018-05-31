@@ -392,13 +392,17 @@
 }
 
 .wt-pedigree-chart, .wt-hourglass-chart {
-    overflow-x: visible;
+    overflow-y: auto;
 }
 
 .wt-pedigree-chart .spacer {
 	background-image: url(images/spacer.png);
 	height:           20px;
 	width:            1px;
+}
+
+#pedigree-page .shadow {
+	box-shadow: 0 0 0!important;  /* override vendor css shadow  */
 }
 
 #childarrow,

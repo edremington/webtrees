@@ -17,7 +17,6 @@ declare(strict_types=1);
 
 namespace Fisharebest\Webtrees\Http\Controllers;
 
-use DirectoryIterator;
 use FilesystemIterator;
 use Fisharebest\Algorithm\MyersDiff;
 use Fisharebest\Webtrees\Auth;
@@ -31,7 +30,6 @@ use Fisharebest\Webtrees\Functions\FunctionsDb;
 use Fisharebest\Webtrees\Functions\FunctionsImport;
 use Fisharebest\Webtrees\GedcomRecord;
 use Fisharebest\Webtrees\GedcomTag;
-use Fisharebest\Webtrees\Html;
 use Fisharebest\Webtrees\I18N;
 use Fisharebest\Webtrees\Individual;
 use Fisharebest\Webtrees\Media;
@@ -71,6 +69,7 @@ class AdminController extends AbstractBaseController {
 		WT_ROOT . 'editconfig_gedcom.php',
 		WT_ROOT . 'editgedcoms.php',
 		WT_ROOT . 'edit_merge.php',
+		WT_ROOT . 'edit_news.php',
 		WT_ROOT . 'genservice.php',
 		WT_ROOT . 'logs.php',
 		WT_ROOT . 'manageservers.php',
@@ -455,6 +454,8 @@ class AdminController extends AbstractBaseController {
 		WT_ROOT . 'themes/xenea/css-1.7.5',
 		// Removed in 2.0.0
 		WT_ROOT . 'addmedia.php',
+		WT_ROOT . 'admin_media.php',
+		WT_ROOT . 'admin_media_upload.php',
 		WT_ROOT . 'admin_module_blocks.php',
 		WT_ROOT . 'admin_module_charts.php',
 		WT_ROOT . 'admin_module_menus.php',
@@ -465,13 +466,22 @@ class AdminController extends AbstractBaseController {
 		WT_ROOT . 'admin_site_access.php',
 		WT_ROOT . 'admin_site_clean.php',
 		WT_ROOT . 'admin_site_info.php',
+		WT_ROOT . 'admin_site_logs.php',
 		WT_ROOT . 'admin_site_merge.php',
 		WT_ROOT . 'admin_site_readme.php',
+		WT_ROOT . 'admin_trees_check.php',
+		WT_ROOT . 'admin_trees_config.php',
+		WT_ROOT . 'admin_trees_download.php',
+		WT_ROOT . 'admin_trees_duplicates.php',
+		WT_ROOT . 'admin_trees_export.php',
+		WT_ROOT . 'admin_trees_manage.php',
+		WT_ROOT . 'admin_trees_merge.php',
+		WT_ROOT . 'admin_trees_places.php',
+		WT_ROOT . 'admin_trees_renumber.php',
+		WT_ROOT . 'admin_trees_unconnected.php',
 		WT_ROOT . 'admin_users_bulk.php',
-		WT_ROOT . 'ancestry.php',
-		WT_ROOT . 'app/Controller/CompactController.php',
-		WT_ROOT . 'app/Controller/SimpleController.php',
 		WT_ROOT . 'assets/js-1.7.7',
+		WT_ROOT . 'autocomplete.php',
 		WT_ROOT . 'block_edit.php',
 		WT_ROOT . 'branches.php',
 		WT_ROOT . 'compact.php',
@@ -486,6 +496,7 @@ class AdminController extends AbstractBaseController {
 		WT_ROOT . 'help_text.php',
 		WT_ROOT . 'hourglass.php',
 		WT_ROOT . 'hourglass_ajax.php',
+		WT_ROOT . 'import.php',
 		WT_ROOT . 'index_edit.php',
 		WT_ROOT . 'indilist.php',
 		WT_ROOT . 'lifespan.php',
@@ -499,6 +510,9 @@ class AdminController extends AbstractBaseController {
 		WT_ROOT . 'relationship.php',
 		WT_ROOT . 'repolist.php',
 		WT_ROOT . 'reportengine.php',
+		WT_ROOT . 'search.php',
+		WT_ROOT . 'search_advanced.php',
+		WT_ROOT . 'site-offline.php',
 		WT_ROOT . 'site-unavailable.php',
 		WT_ROOT . 'sourcelist.php',
 		WT_ROOT . 'statistics.php',
@@ -538,79 +552,6 @@ class AdminController extends AbstractBaseController {
 	 */
 	public function charts(): Response {
 		return $this->components('chart', 'charts', I18N::translate('Chart'), I18N::translate('Charts'));
-	}
-
-	/**
-	 * Show old user files in the data folder.
-	 *
-	 * @return Response
-	 */
-	public function cleanData(): Response {
-		$protected = [
-			'.htaccess',
-			'.gitignore',
-			'index.php',
-			'config.ini.php',
-		];
-
-		// If we are storing the media in the data folder (this is the default), then don’t delete it.
-		foreach (Tree::getAll() as $tree) {
-			$MEDIA_DIRECTORY = $tree->getPreference('MEDIA_DIRECTORY');
-			list($folder) = explode('/', $MEDIA_DIRECTORY);
-
-			if ($folder !== '..') {
-				$protected[] = $folder;
-			}
-		}
-
-		$entries = [];
-
-		foreach (new DirectoryIterator(WT_DATA_DIR) as $file) {
-			$entries[] = $file->getFilename();
-		}
-		$entries = array_diff($entries, [
-			'.',
-			'..',
-		]);
-
-		return $this->viewResponse('admin/clean-data', [
-			'title'     => I18N::translate('Clean up data folder'),
-			'entries'   => $entries,
-			'protected' => $protected,
-		]);
-	}
-
-	/**
-	 * Delete old user files in the data folder.
-	 *
-	 * @param Request $request
-	 *
-	 * @return RedirectResponse
-	 */
-	public function cleanDataAction(Request $request): RedirectResponse {
-		$to_delete = (array) $request->get('to_delete');
-		$to_delete = array_filter($to_delete);
-
-		foreach ($to_delete as $path) {
-			// Show different feedback message for files and folders.
-			$is_dir = is_dir(WT_DATA_DIR . $path);
-
-			if (File::delete(WT_DATA_DIR . $path)) {
-				if ($is_dir) {
-					FlashMessages::addMessage(I18N::translate('The folder %s has been deleted.', e($path)), 'success');
-				} else {
-					FlashMessages::addMessage(I18N::translate('The file %s has been deleted.', e($path)), 'success');
-				}
-			} else {
-				if ($is_dir) {
-					FlashMessages::addMessage(I18N::translate('The folder %s could not be deleted.', e($path)), 'danger');
-				} else {
-					FlashMessages::addMessage(I18N::translate('The file %s could not be deleted.', e($path)), 'danger');
-				}
-			}
-		}
-
-		return new RedirectResponse(route('admin-control-panel'));
 	}
 
 	/**
@@ -1019,7 +960,6 @@ class AdminController extends AbstractBaseController {
 					'fact'       => $fact,
 					'individual' => $individual,
 					'media'      => $media,
-					'tree'       => $tree,
 				]);
 			}, $facts);
 
@@ -1249,7 +1189,6 @@ class AdminController extends AbstractBaseController {
 				'note1'       => $record1 instanceof Note ? $record1 : null,
 				'note2'       => $record2 instanceof Note ? $record2 : null,
 				'title'       => $title,
-				'tree'        => $tree,
 			]);
 		}
 
@@ -1288,7 +1227,6 @@ class AdminController extends AbstractBaseController {
 			'record1' => $record1,
 			'record2' => $record2,
 			'title'   => $title,
-			'tree'    => $tree,
 		]);
 	}
 
@@ -1446,30 +1384,6 @@ class AdminController extends AbstractBaseController {
 	}
 
 	/**
-	 * Show the server information page.
-	 *
-	 * @return Response
-	 */
-	public function serverInformation(): Response {
-		$mysql_variables = Database::prepare("SHOW VARIABLES")->fetchAssoc();
-		$mysql_variables = array_map(function ($text) {
-			return str_replace(',', ', ', $text);
-		}, $mysql_variables);
-
-		ob_start();
-		phpinfo(INFO_ALL & ~INFO_CREDITS & ~INFO_LICENSE);
-		$phpinfo = ob_get_clean();
-		preg_match('%<body>(.*)</body>%s', $phpinfo, $matches);
-		$phpinfo = $matches[1];
-
-		return $this->viewResponse('admin/server-information', [
-			'title'           => I18N::translate('Server information'),
-			'phpinfo'         => $phpinfo,
-			'mysql_variables' => $mysql_variables,
-		]);
-	}
-
-	/**
 	 * Show the admin page for sidebars.
 	 *
 	 * @return Response
@@ -1500,13 +1414,12 @@ class AdminController extends AbstractBaseController {
 		$privacy_constants    = $this->privacyConstants();
 		$privacy_restrictions = $this->privacyRestrictions($tree);
 
-		return $this->viewResponse('admin/tree-privacy', [
+		return $this->viewResponse('admin/trees-privacy', [
 			'all_tags'             => $all_tags,
 			'count_trees'          => count(Tree::getAll()),
 			'privacy_constants'    => $privacy_constants,
 			'privacy_restrictions' => $privacy_restrictions,
 			'title'                => $title,
-			'tree'                 => $tree,
 		]);
 	}
 
@@ -1587,7 +1500,7 @@ class AdminController extends AbstractBaseController {
 		}
 
 
-		return new RedirectResponse(Html::url('admin_trees_manage.php', ['ged' => $tree->getName()]));
+		return new RedirectResponse(route('admin-trees', ['ged' => $tree->getName()]));
 	}
 
 	/**

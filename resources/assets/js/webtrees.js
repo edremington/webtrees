@@ -827,15 +827,15 @@ function insertTextAtCursor (e, t) {
   e.scrollTop = scrollTop;
 }
 
+// Send the CSRF token on all AJAX requests
+$.ajaxSetup({
+  headers: {
+    'X-CSRF-TOKEN': $('meta[name=csrf]').attr('content')
+  }
+});
+
 // Initialisation
 $(function () {
-  // Send the CSRF token on all AJAX requests
-  $.ajaxSetup({
-    headers: {
-      'X-CSRF-TOKEN': $('meta[name=csrf]').attr('content')
-    }
-  });
-
   // Page elements that load automaticaly via AJAX.
   // This prevents bad robots from crawling resource-intensive pages.
   $("[data-ajax-url]").each(function () {
@@ -953,10 +953,7 @@ $(function () {
     $('.wt-osk').show();
 
   });
-  $(document).on('focusin', ':input', function () {
-    // When an element gains focus, remember it.
-    osk_focus_element = this;
-  });
+
   $('.wt-osk-script-button').change(function() {
     $('.wt-osk-script').prop('hidden', true);
     $('.wt-osk-script-' + $(this).data('script')).prop('hidden', false);
@@ -981,5 +978,9 @@ $(function () {
         $('.wt-osk').hide();
       }
     }
+  });
+
+  $('.wt-osk-close').on('click', function () {
+    $('.wt-osk').hide();
   });
 });

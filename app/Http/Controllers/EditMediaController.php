@@ -270,7 +270,6 @@ class EditMediaController extends AbstractBaseController {
 		$tree = $request->attributes->get('tree');
 
 		return new Response(view('modals/create-media-object', [
-			'tree'            => $tree,
 			'max_upload_size' => $this->maxUploadFilesize(),
 			'media_types'     => $this->mediaTypes(),
 			'unused_files'    => $this->unusedFiles($tree),
@@ -315,7 +314,7 @@ class EditMediaController extends AbstractBaseController {
 		// Accept the new record.  Rejecting it would leave the filesystem out-of-sync with the genealogy
 		FunctionsImport::acceptAllChanges($media_object->getXref(), $tree->getTreeId());
 
-		return new RedirectResponse(Html::url('admin_media.php', ['files' => 'unused']));
+		return new RedirectResponse($media_object->url());
 	}
 
 	/**

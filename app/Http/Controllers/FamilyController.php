@@ -63,7 +63,7 @@ class FamilyController extends AbstractBaseController {
 		$significant = (object) [
 			'family'     => $family,
 			'individual' => null,
-			'surname'    => ''
+			'surname'    => '',
 		];
 
 		foreach ($family->getSpouses() + $family->getChildren() as $individual) {

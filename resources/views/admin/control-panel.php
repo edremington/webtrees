@@ -42,31 +42,31 @@
 				<ul class="fa-ul">
 					<li>
 						<span class="fa-li"><i class="fas fa-wrench"></i></span>
-						<a href="<?= e(Html::url('admin_site_config.php', ['action' => 'site'])) ?>">
+						<a href="<?= e(route('admin-site-preferences')) ?>">
 							<?= I18N::translate('Website preferences') ?>
 						</a>
 					</li>
 					<li>
 						<span class="fa-li"><i class="fas fa-wrench"></i></span>
-						<a href="<?= e(Html::url('admin_site_config.php', ['action' => 'email'])) ?>">
+						<a href="<?= e(route('admin-site-mail')) ?>">
 							<?= I18N::translate('Sending email') ?>
 						</a>
 					</li>
 					<li>
 						<span class="fa-li"><i class="fas fa-wrench"></i></span>
-						<a href="<?= e(Html::url('admin_site_config.php', ['action' => 'login'])) ?>">
+						<a href="<?= e(route('admin-site-registration')) ?>">
 							<?= I18N::translate('Sign-in and registration') ?>
 						</a>
 					</li>
 					<li>
 						<span class="fa-li"><i class="fas fa-wrench"></i></span>
-						<a href="<?= e(Html::url('admin_site_config.php', ['action' => 'languages'])) ?>">
+						<a href="<?= e(route('admin-site-languages')) ?>">
 							<?= I18N::translate('Languages') ?>
 						</a>
 					</li>
 					<li>
 						<span class="fa-li"><i class="fas fa-wrench"></i></span>
-						<a href="<?= e(Html::url('admin_site_config.php', ['action' => 'tracking'])) ?>">
+						<a href="<?= e(route('admin-site-analytics')) ?>">
 							<?= I18N::translate('Tracking and analytics') ?>
 						</a>
 					</li>
@@ -76,7 +76,7 @@
 				<ul class="fa-ul">
 					<li>
 						<span class="fa-li"><i class="fas fa-wrench"></i></span>
-						<a href="<?= e(Html::url('admin_site_logs.php', [])) ?>">
+						<a href="<?= e(route('admin-site-logs')) ?>">
 							<?= I18N::translate('Website logs') ?>
 						</a>
 					</li>
@@ -88,7 +88,7 @@
 					</li>
 					<li>
 						<span class="fa-li"><i class="fas fa-wrench"></i></span>
-						<a href="<?= e(route('admin-server-information')) ?>">
+						<a href="<?= e(route('admin-site-information')) ?>">
 							<?= I18N::translate('Server information') ?>
 						</a>
 					</li>
@@ -137,7 +137,7 @@
 							</a>
 						</th>
 						<td>
-							<?= FontAwesome::linkIcon('preferences', I18N::translate('Manage family trees'), ['href' => Html::url('admin_trees_manage.php', ['ged' => $tree->getName()])]) ?>
+							<?= FontAwesome::linkIcon('preferences', I18N::translate('Manage family trees'), ['href' => route('admin-trees', ['ged' => $tree->getName()])]) ?>
 						</td>
 						<td class="text-right">
 							<?php if ($changes[$tree->getTreeId()]): ?>
@@ -240,7 +240,7 @@
 		<ul class="fa-ul">
 			<li>
 				<span class="fa-li"><i class="fas fa-wrench"></i></span>
-				<a href="<?= e(Html::url('admin_trees_manage.php', [])) ?>">
+				<a href="<?= e(route('admin-trees', ['ged' => $tree->getName()])) ?>">
 					<?= I18N::translate('Manage family trees') ?>
 				</a>
 			</li>
@@ -253,7 +253,7 @@
 			<?php if (count($all_trees) > 1): ?>
 				<li>
 					<span class="fa-li"><i class="fas fa-wrench"></i></span>
-					<a href="<?= e(Html::url('admin_trees_merge.php', [])) ?>">
+					<a href="<?= e(route('admin-trees-merge')) ?>">
 						<?= I18N::translate('Merge family trees') ?>
 					</a>
 				</li>
@@ -296,19 +296,19 @@
 				<ul class="fa-ul">
 					<li>
 						<span class="fa-li"><i class="fas fa-wrench"></i></span>
-						<a href="<?= e(Html::url('admin_users.php', [])) ?>">
+						<a href="<?= e(route('admin-users', ['ged' => $tree->getName()])) ?>">
 							<?= I18N::translate('User administration') ?>
 						</a>
 					</li>
 					<li>
 						<span class="fa-li"><i class="fas fa-wrench"></i></span>
-						<a href="<?= e(Html::url('admin_users.php', ['action' => 'edit'])) ?>">
+						<a href="<?= e(route('admin-users-create', ['ged' => $tree->getName()])) ?>">
 							<?= I18N::translate('Add a user') ?>
 						</a>
 					</li>
 					<li>
 						<span class="fa-li"><i class="fas fa-wrench"></i></span>
-						<a href="<?= e(Html::url('admin_users.php', ['action' => 'cleanup'])) ?>">
+						<a href="<?= e(route('admin-users-cleanup')) ?>">
 							<?= I18N::translate('Delete inactive users') ?>
 						</a>
 					</li>
@@ -385,7 +385,7 @@
 						</a>
 					</li>
 					<li>
-						<span class="fa-li"><i class="fas fa-share-alt"></i></span>
+						<span class="fa-li"><i class="fas fa-sitemap"></i></span>
 						<a href="<?= e(route('admin-charts')) ?>">
 							<?= I18N::translate('Charts') ?>
 						</a>
@@ -434,13 +434,13 @@
 		<ul class="fa-ul">
 			<li>
 				<span class="fa-li"><i class="fas fa-cogs"></i></span>
-				<a href="<?= e(Html::url('admin_media.php', [])) ?>">
+				<a href="<?= e(route('admin-media')) ?>">
 					<?= I18N::translate('Manage media') ?>
 				</a>
 			</li>
 			<li>
 				<span class="fa-li"><i class="fas fa-cogs"></i></span>
-				<a href="<?= e(Html::url('admin_media_upload.php', [])) ?>">
+				<a href="<?= e(route('admin-media-upload')) ?>">
 					<?= I18N::translate('Upload media files') ?>
 				</a>
 			</li>

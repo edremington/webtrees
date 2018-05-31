@@ -74,15 +74,6 @@ define('WT_EVENTS_DEAT', 'DEAT|BURI|CREM');
 define('WT_EVENTS_MARR', 'MARR|_NMR');
 define('WT_EVENTS_DIV', 'DIV|ANUL|_SEPR');
 
-// Use these line endings when writing files on the server
-define('WT_EOL', "\r\n");
-
-// Gedcom specification/definitions
-define('WT_GEDCOM_LINE_LENGTH', 255 - strlen(WT_EOL)); // Characters, not bytes
-
-// Used in Google charts
-define('WT_GOOGLE_CHART_ENCODING', 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.');
-
 // For performance, it is quicker to refer to files using absolute paths
 define('WT_ROOT', realpath(dirname(__DIR__)) . DIRECTORY_SEPARATOR);
 
@@ -124,20 +115,14 @@ define('WT_SCRIPT_NAME', basename(Filter::server('SCRIPT_NAME')));
 set_error_handler(function ($errno, $errstr, $errfile, $errline) {
 	// Ignore errors that are silenced with '@'
 	if (error_reporting() & $errno) {
-		throw new ErrorException($errfile . ':' . $errline . ' ' . $errstr, $errno);
+		throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
 	}
 });
 
 DebugBar::startMeasure('init database');
 
 // Load our configuration file, so we can connect to the database
-if (file_exists(WT_ROOT . 'data/config.ini.php')) {
-	// Down for maintenance?
-	if (file_exists(WT_ROOT . 'data/offline.txt')) {
-		header('Location: site-offline.php');
-		exit;
-	}
-} else {
+if (!file_exists(WT_ROOT . 'data/config.ini.php')) {
 	// No config file. Set one up.
 	$url      = Html::url('setup.php', ['route' => 'setup']);
 	$response = new RedirectResponse($url);
@@ -219,10 +204,9 @@ if (!Session::get('initiated')) {
 DebugBar::startMeasure('init tree');
 
 // Set the tree for the page; (1) the request, (2) the session, (3) the site default, (4) any tree
-foreach ([Filter::post('ged'), Filter::get('ged'), Session::get('GEDCOM'), Site::getPreference('DEFAULT_GEDCOM')] as $tree_name) {
+foreach ([Filter::post('ged'), Filter::get('ged'), Site::getPreference('DEFAULT_GEDCOM')] as $tree_name) {
 	$WT_TREE = Tree::findByName($tree_name);
 	if ($WT_TREE) {
-		Session::put('GEDCOM', $tree_name);
 		break;
 	}
 }

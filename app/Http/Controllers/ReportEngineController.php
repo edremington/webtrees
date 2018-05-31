@@ -58,7 +58,6 @@ class ReportEngineController extends AbstractBaseController {
 		return $this->viewResponse('report-select-page', [
 			'reports' => $reports,
 			'title'   => $title,
-			'tree'    => $tree,
 		]);
 
 	}

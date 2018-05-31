@@ -24,6 +24,33 @@ use Throwable;
  * recording, etc.
  */
 class MediaFile {
+	const MIME_TYPES = [
+		'bmp'  => 'image/bmp',
+		'doc'  => 'application/msword',
+		'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+		'ged'  => 'text/x-gedcom',
+		'gif'  => 'image/gif',
+		'html' => 'text/html',
+		'htm'  => 'text/html',
+		'jpeg' => 'image/jpeg',
+		'jpg'  => 'image/jpeg',
+		'mov'  => 'video/quicktime',
+		'mp3'  => 'audio/mpeg',
+		'mp4'  => 'video/mp4',
+		'ogv'  => 'video/ogg',
+		'pdf'  => 'application/pdf',
+		'png'  => 'image/png',
+		'rar'  => 'application/x-rar-compressed',
+		'swf'  => 'application/x-shockwave-flash',
+		'svg'  => 'image/svg',
+		'tiff' => 'image/tiff',
+		'tif'  => 'image/tiff',
+		'xls'  => 'application/vnd-ms-excel',
+		'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+		'wmv'  => 'video/x-ms-wmv',
+		'zip'  => 'application/zip',
+	];
+
 	/** @var string The filename */
 	private $multimedia_file_refn = '';
 
@@ -310,75 +337,6 @@ class MediaFile {
 	}
 
 	/**
-	 * get image properties
-	 *
-	 * @return array
-	 */
-	public function getImageAttributes() {
-		$imgsize = [];
-		if ($this->fileExists()) {
-			try {
-				$imgsize = getimagesize($this->getServerFilename());
-				if (is_array($imgsize) && !empty($imgsize['0'])) {
-					// this is an image
-					$imageTypes     = ['', 'GIF', 'JPG', 'PNG', 'SWF', 'PSD', 'BMP', 'TIFF', 'TIFF', 'JPC', 'JP2', 'JPX', 'JB2', 'SWC', 'IFF', 'WBMP', 'XBM'];
-					$imgsize['ext'] = $imageTypes[0 + $imgsize[2]];
-					// this is for display purposes, always show non-adjusted info
-					$imgsize['WxH'] = /* I18N: image dimensions, width × height */
-						I18N::translate('%1$s × %2$s pixels', I18N::number($imgsize['0']), I18N::number($imgsize['1']));
-				}
-			} catch (Throwable $ex) {
-				DebugBar::addThrowable($ex);
-
-				// Not an image, or not a valid image?
-				$imgsize = false;
-			}
-		}
-
-		if (!is_array($imgsize) || empty($imgsize['0'])) {
-			// this is not an image, OR the file doesn’t exist OR it is a url
-			$imgsize[0]      = 0;
-			$imgsize[1]      = 0;
-			$imgsize['ext']  = '';
-			$imgsize['mime'] = '';
-			$imgsize['WxH']  = '';
-		}
-
-		if (empty($imgsize['mime'])) {
-			// this is not an image, OR the file doesn’t exist OR it is a url
-			// set file type equal to the file extension - can’t use parse_url because this may not be a full url
-			$exp            = explode('?', $this->multimedia_file_refn);
-			$imgsize['ext'] = strtoupper(pathinfo($exp[0], PATHINFO_EXTENSION));
-			// all mimetypes we wish to serve with the media firewall must be added to this array.
-			$mime = [
-				'DOC' => 'application/msword',
-				'MOV' => 'video/quicktime',
-				'MP3' => 'audio/mpeg',
-				'PDF' => 'application/pdf',
-				'PPT' => 'application/vnd.ms-powerpoint',
-				'RTF' => 'text/rtf',
-				'SID' => 'image/x-mrsid',
-				'TXT' => 'text/plain',
-				'XLS' => 'application/vnd.ms-excel',
-				'WMV' => 'video/x-ms-wmv',
-			];
-			if (empty($mime[$imgsize['ext']])) {
-				// if we don’t know what the mimetype is, use something ambiguous
-				$imgsize['mime'] = 'application/octet-stream';
-				if ($this->fileExists()) {
-					// alert the admin if we cannot determine the mime type of an existing file
-					// as the media firewall will be unable to serve this file properly
-					Log::addMediaLog('Media Firewall error: >Unknown Mimetype< for file >' . $this->multimedia_file_refn . '<');
-				}
-			} else {
-				$imgsize['mime'] = $mime[$imgsize['ext']];
-			}
-		}
-
-		return $imgsize;
-	}
-
-	/**
 	 * Generate a URL to download a non-image media file.
 	 *
 	 * @return string
@@ -454,58 +412,6 @@ class MediaFile {
 	 * @return string
 	 */
 	public function mimeType() {
-		// Themes contain icon definitions for some/all of these mime-types
-		switch ($this->extension()) {
-			case 'bmp':
-				return 'image/bmp';
-			case 'doc':
-				return 'application/msword';
-			case 'docx':
-				return 'application/msword';
-			case 'ged':
-				return 'text/x-gedcom';
-			case 'gif':
-				return 'image/gif';
-			case 'htm':
-				return 'text/html';
-			case 'html':
-				return 'text/html';
-			case 'jpeg':
-				return 'image/jpeg';
-			case 'jpg':
-				return 'image/jpeg';
-			case 'mov':
-				return 'video/quicktime';
-			case 'mp3':
-				return 'audio/mpeg';
-			case 'mp4':
-				return 'video/mp4';
-			case 'ogv':
-				return 'video/ogg';
-			case 'pdf':
-				return 'application/pdf';
-			case 'png':
-				return 'image/png';
-			case 'rar':
-				return 'application/x-rar-compressed';
-			case 'swf':
-				return 'application/x-shockwave-flash';
-			case 'svg':
-				return 'image/svg';
-			case 'tif':
-				return 'image/tiff';
-			case 'tiff':
-				return 'image/tiff';
-			case 'xls':
-				return 'application/vnd-ms-excel';
-			case 'xlsx':
-				return 'application/vnd-ms-excel';
-			case 'wmv':
-				return 'video/x-ms-wmv';
-			case 'zip':
-				return 'application/zip';
-			default:
-				return 'application/octet-stream';
-		}
+		return self::MIME_TYPES[$this->extension()] ?? 'application/octet-stream';
 	}
 }

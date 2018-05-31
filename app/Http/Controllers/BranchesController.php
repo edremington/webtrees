@@ -40,9 +40,6 @@ class BranchesController extends AbstractBaseController {
 	 * @return Response
 	 */
 	public function page(Request $request): Response {
-		/** @var Tree $tree */
-		$tree = $request->attributes->get('tree');
-
 		$surname     = $request->get('surname', '');
 		$soundex_std = (bool) $request->get('soundex_std');
 		$soundex_dm  = (bool) $request->get('soundex_dm');
@@ -60,7 +57,6 @@ class BranchesController extends AbstractBaseController {
 			'soundex_std' => $soundex_std,
 			'surname'     => $surname,
 			'title'       => $title,
-			'tree'        => $tree,
 		]);
 	}
 
