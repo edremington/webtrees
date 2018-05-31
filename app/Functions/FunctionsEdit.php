@@ -51,6 +51,7 @@ use Fisharebest\Webtrees\Note;
 use Fisharebest\Webtrees\Repository;
 use Fisharebest\Webtrees\Select2;
 use Fisharebest\Webtrees\Source;
+use Fisharebest\Webtrees\Tree;
 use Fisharebest\Webtrees\User;
 use Ramsey\Uuid\Uuid;
 
@@ -209,21 +210,6 @@ class FunctionsEdit {
 	}
 
 	/**
-	 * A list of registration rules (e.g. for an edit control).
-	 *
-	 * @return string[]
-	 */
-	public static function optionsRegistrationRules() {
-		return [
-			0 => I18N::translate('No predefined text'),
-			1 => I18N::translate('Predefined text that states all users can request a user account'),
-			2 => I18N::translate('Predefined text that states admin will decide on each request for a user account'),
-			3 => I18N::translate('Predefined text that states only family members can request a user account'),
-			4 => I18N::translate('Choose user defined welcome text typed below'),
-		];
-	}
-
-	/**
 	 * A list of GEDCOM restrictions (e.g. for an edit control).
 	 *
 	 * @param bool $include_empty
@@ -258,19 +244,6 @@ class FunctionsEdit {
 	}
 
 	/**
-	 * A list SSL modes (e.g. for an edit control).
-	 *
-	 * @return string[]
-	 */
-	public static function optionsSslModes() {
-		return [
-			'none'                                                                        => I18N::translate('none'),
-			/* I18N: Secure Sockets Layer - a secure communications protocol*/ 'ssl'      => I18N::translate('ssl'),
-			/* I18N: Transport Layer Security - a secure communications protocol */ 'tls' => I18N::translate('tls'),
-		];
-	}
-
-	/**
 	 * A list of temple options (e.g. for an edit control).
 	 *
 	 * @return string[]
@@ -297,12 +270,13 @@ class FunctionsEdit {
 	/**
 	 * Create a form control to select a family.
 	 *
+	 * @param Tree        $tree
 	 * @param Family|null $family
 	 * @param string[]    $attributes
 	 *
 	 * @return string
 	 */
-	public static function formControlFamily(Family $family = null, array $attributes = []) {
+	public static function formControlFamily(Tree $tree, Family $family = null, array $attributes = []) {
 		$value   = '';
 		$options = ['' => ''];
 
@@ -311,7 +285,7 @@ class FunctionsEdit {
 			$options = [$value => view('selects/family', ['family' => $family])];
 		}
 
-		return Bootstrap4::select($options, $value, Select2::familyConfig() + $attributes);
+		return Bootstrap4::select($options, $value, Select2::familyConfig($tree) + $attributes);
 	}
 
 	/**
@@ -337,12 +311,13 @@ class FunctionsEdit {
 	/**
 	 * Create a form control to select an individual.
 	 *
+	 * @param Tree            $tree
 	 * @param Individual|null $individual
 	 * @param string[]        $attributes
 	 *
 	 * @return string
 	 */
-	public static function formControlIndividual(Individual $individual = null, array $attributes = []) {
+	public static function formControlIndividual(Tree $tree, Individual $individual = null, array $attributes = []) {
 		$value   = '';
 		$options = ['' => ''];
 
@@ -351,18 +326,19 @@ class FunctionsEdit {
 			$options = [$value => view('selects/individual', ['individual' => $individual])];
 		}
 
-		return Bootstrap4::select($options, $value, Select2::individualConfig() + $attributes);
+		return Bootstrap4::select($options, $value, Select2::individualConfig($tree) + $attributes);
 	}
 
 	/**
 	 * Create a form control to select a media object.
 	 *
+	 * @param Tree       $tree
 	 * @param Media|null $media
 	 * @param string[]   $attributes
 	 *
 	 * @return string
 	 */
-	public static function formControlMediaObject(Media $media = null, array $attributes = []) {
+	public static function formControlMediaObject(Tree $tree, Media $media = null, array $attributes = []) {
 		$value   = '';
 		$options = ['' => ''];
 
@@ -371,18 +347,19 @@ class FunctionsEdit {
 			$options = [$value => view('selects/media', ['media' => $media])];
 		}
 
-		return Bootstrap4::select($options, $value, Select2::mediaObjectConfig() + $attributes);
+		return Bootstrap4::select($options, $value, Select2::mediaObjectConfig($tree) + $attributes);
 	}
 
 	/**
 	 * Create a form control to select a note.
 	 *
+	 * @param Tree          $tree
 	 * @param Note|null     $note
 	 * @param string[]|null $attributes
 	 *
 	 * @return string
 	 */
-	public static function formControlNote(Note $note = null, array $attributes = []) {
+	public static function formControlNote(Tree $tree, Note $note = null, array $attributes = []) {
 		$value   = '';
 		$options = ['' => ''];
 
@@ -391,18 +368,19 @@ class FunctionsEdit {
 			$options = [$value => view('selects/note', ['note' => $note])];
 		}
 
-		return Bootstrap4::select($options, $value, Select2::noteConfig() + $attributes);
+		return Bootstrap4::select($options, $value, Select2::noteConfig($tree) + $attributes);
 	}
 
 	/**
 	 * Create a form control to select a place.
 	 *
+	 * @param Tree     $tree
 	 * @param string   $place
 	 * @param string[] $attributes
 	 *
 	 * @return string
 	 */
-	public static function formControlPlace($place, array $attributes = []) {
+	public static function formControlPlace(Tree $tree, $place, array $attributes = []) {
 		$value   = '';
 		$options = ['' => ''];
 
@@ -410,18 +388,19 @@ class FunctionsEdit {
 			$options = [$place => $place];
 		}
 
-		return Bootstrap4::select($options, $value, Select2::placeConfig() + $attributes);
+		return Bootstrap4::select($options, $value, Select2::placeConfig($tree) + $attributes);
 	}
 
 	/**
 	 * Create a form control to select a repository.
 	 *
+	 * @param Tree            $tree
 	 * @param Repository|null $repository
 	 * @param string[]        $attributes
 	 *
 	 * @return string
 	 */
-	public static function formControlRepository(Repository $repository = null, array $attributes = []) {
+	public static function formControlRepository(Tree $tree, Repository $repository = null, array $attributes = []) {
 		$value   = '';
 		$options = ['' => ''];
 
@@ -430,18 +409,19 @@ class FunctionsEdit {
 			$options = [$value => view('selects/repository', ['repository' => $repository])];
 		}
 
-		return Bootstrap4::select($options, $value, Select2::repositoryConfig() + $attributes);
+		return Bootstrap4::select($options, $value, Select2::repositoryConfig($tree) + $attributes);
 	}
 
 	/**
 	 * Create a form control to select a source.
 	 *
+	 * @param Tree        $tree
 	 * @param Source|null $source
 	 * @param string[]    $attributes
 	 *
 	 * @return string
 	 */
-	public static function formControlSource(Source $source = null, array $attributes = []) {
+	public static function formControlSource(Tree $tree, Source $source = null, array $attributes = []) {
 		$value   = '';
 		$options = ['' => ''];
 
@@ -450,18 +430,19 @@ class FunctionsEdit {
 			$options = [$value => view('selects/source', ['source' => $source])];
 		}
 
-		return Bootstrap4::select($options, $value, Select2::sourceConfig() + $attributes);
+		return Bootstrap4::select($options, $value, Select2::sourceConfig($tree) + $attributes);
 	}
 
 	/**
 	 * Create a form control to select a submitter.
 	 *
+	 * @param Tree              $tree
 	 * @param GedcomRecord|null $submitter
 	 * @param string[]          $attributes
 	 *
 	 * @return string
 	 */
-	public static function formControlSubmitter(GedcomRecord $submitter = null, array $attributes = []) {
+	public static function formControlSubmitter(Tree $tree, GedcomRecord $submitter = null, array $attributes = []) {
 		$value   = '';
 		$options = ['' => ''];
 
@@ -470,7 +451,7 @@ class FunctionsEdit {
 			$options = [$value => view('selects/submitter', ['submitter' => $submitter])];
 		}
 
-		return Bootstrap4::select($options, $value, Select2::submitterConfig() + $attributes);
+		return Bootstrap4::select($options, $value, Select2::submitterConfig($tree) + $attributes);
 	}
 
 	/**
@@ -701,12 +682,12 @@ class FunctionsEdit {
 		} elseif ($fact === 'ADOP') {
 			$html .= Bootstrap4::select(GedcomCodeAdop::getValues($person), $value, ['id' => $id, 'name' => $name]);
 		} elseif ($fact === 'ALIA') {
-			$html .= self::formControlIndividual(Individual::getInstance($value, $WT_TREE), ['id' => $id, 'name' => $name]);
+			$html .= self::formControlIndividual($WT_TREE, Individual::getInstance($value, $WT_TREE), ['id' => $id, 'name' => $name]);
 		} elseif ($fact === 'ASSO' || $fact === '_ASSO') {
 			$html .=
 				'<div class="input-group">' .
 				'<span class="input-group-btn"><button class="btn btn-secondary" type="button" onclick="createNewRecord(' . $id . ')" title="' . I18N::translate('Create an individual') . '"><i class="fas fa-plus"></i></button></span>' .
-				self::formControlIndividual(Individual::getInstance($value, $WT_TREE), ['id' => $id, 'name' => $name]) .
+				self::formControlIndividual($WT_TREE, Individual::getInstance($value, $WT_TREE), ['id' => $id, 'name' => $name]) .
 				'</div>';
 			if ($level === '1') {
 				$html .= '<p class="small text-muted">' . I18N::translate('An associate is another individual who was involved with this individual, such as a friend or an employer.') . '</p>';
@@ -715,7 +696,7 @@ class FunctionsEdit {
 			}
 		} elseif ($fact === 'DATE') {
 			$html .= '<div class="input-group">';
-			$html .= '<input class="form-control" type="text" id="' . $id . '" name="' . $name . '" value="' . e($value) . '" onchange="valid_date(this)">';
+			$html .= '<input class="form-control" type="text" id="' . $id . '" name="' . $name . '" value="' . e($value) . '" onchange="valid_date(this)" dir="ltr">';
 			$html .= self::inputAddonCalendar($id);
 			$html .= self::inputAddonHelp('DATE');
 			$html .= '</div>';
@@ -725,7 +706,7 @@ class FunctionsEdit {
 			$html .=
 				'<div class="input-group">' .
 				'<span class="input-group-btn"><button class="btn btn-secondary" type="button" data-toggle="modal" data-target="#modal-create-family" data-element-id="' . $id . '" title="' . I18N::translate('Create a family') . '"><i class="fas fa-plus"></i></button></span>' .
-				self::formControlFamily(Family::getInstance($value, $WT_TREE), ['id' => $id, 'name' => $name]) .
+				self::formControlFamily($WT_TREE, Family::getInstance($value, $WT_TREE), ['id' => $id, 'name' => $name]) .
 				'</div>';
 		} elseif ($fact === 'LATI') {
 			$html .= '<input class="form-control" type="text" id="' . $id . '" name="' . $name . '" value="' . e($value) . '" oninput="valid_lati_long(this, \'N\', \'S\')">';
@@ -739,13 +720,13 @@ class FunctionsEdit {
 				'<i class="fas fa-plus"></i><' .
 				'/button>' .
 				'</span>' .
-				self::formControlNote(Note::getInstance($value, $WT_TREE), ['id' => $id, 'name' => $name]) .
+				self::formControlNote($WT_TREE, Note::getInstance($value, $WT_TREE), ['id' => $id, 'name' => $name]) .
 				'</div>';
 		} elseif ($fact === 'OBJE') {
 			$html .=
 				'<div class="input-group">' .
 				'<span class="input-group-btn"><button class="btn btn-secondary" type="button" data-toggle="modal" data-href="' . e(route('create-media-object', ['tree' => $WT_TREE->getName()])) . '" data-target="#wt-ajax-modal" data-select-id="' . $id . '" title="' . I18N::translate('Create a media object') . '"><i class="fas fa-plus"></i></button></span>' .
-				self::formControlMediaObject(Media::getInstance($value, $WT_TREE), ['id' => $id, 'name' => $name]) .
+				self::formControlMediaObject($WT_TREE, Media::getInstance($value, $WT_TREE), ['id' => $id, 'name' => $name]) .
 				'</div>';
 		} elseif ($fact === 'PAGE') {
 			$html .= '<input class="form-control" type="text" id="' . $id . '" name="' . $name . '" value="' . e($value) . '"   data-autocomplete-type="PAGE" data-autocomplete-extra="#' . $previous_ids['SOUR'] . '">';
@@ -757,6 +738,7 @@ class FunctionsEdit {
 					'class'                 => 'form-control',
 					'id'                    => $id,
 					'name'                  => $name,
+					'value'                 => $value,
 					'type'                  => 'text',
 					'data-autocomplete-url' => route('autocomplete-place', [
 						'ged'   => $WT_TREE->getName(),
@@ -781,7 +763,7 @@ class FunctionsEdit {
 			$html .=
 				'<div class="input-group">' .
 				'<span class="input-group-btn"><button class="btn btn-secondary" type="button" data-toggle="modal" data-href="' . e(route('create-repository', ['tree' => $WT_TREE->getName()])) . '" data-target="#wt-ajax-modal" data-select-id="' . $id . '" title="' . I18N::translate('Create a repository') . '"><i class="fas fa-plus"></i></button></span>' .
-				self::formControlRepository(Repository::getInstance($value, $WT_TREE), ['id' => $id, 'name' => $name]) .
+				self::formControlRepository($WT_TREE, Repository::getInstance($value, $WT_TREE), ['id' => $id, 'name' => $name]) .
 				'</div>';
 		} elseif ($fact === 'RESN') {
 			$html .= '<div class="input-group">';
@@ -790,7 +772,7 @@ class FunctionsEdit {
 			$html .= '</span>';
 			$html .= '</div>';
 		} elseif ($fact === 'SEX') {
-			if ($value !== 'M' && !$value !== 'F') {
+			if ($value !== 'M' && $value !== 'F') {
 				$value = 'U';
 			}
 			$html .= Bootstrap4::radioButtons($name, ['M' => I18N::translate('Male'), 'F' => I18N::translate('Female'), 'U' => I18N::translateContext('unknown gender', 'Unknown')], $value, true);
@@ -798,7 +780,7 @@ class FunctionsEdit {
 			$html .=
 				'<div class="input-group">' .
 				'<span class="input-group-btn"><button class="btn btn-secondary" type="button" data-toggle="modal" data-href="' . e(route('create-source', ['tree' => $WT_TREE->getName()])) . '" data-target="#wt-ajax-modal" data-select-id="' . $id . '" title="' . I18N::translate('Create a source') . '"><i class="fas fa-plus"></i></button></span>' .
-				self::formControlSource(Source::getInstance($value, $WT_TREE), ['id' => $id, 'name' => $name]) .
+				self::formControlSource($WT_TREE, Source::getInstance($value, $WT_TREE), ['id' => $id, 'name' => $name]) .
 				'</div>';
 		} elseif ($fact === 'STAT') {
 			$html .= Bootstrap4::select(GedcomCodeStat::statusNames($upperlevel), $value);
@@ -806,7 +788,7 @@ class FunctionsEdit {
 			$html .=
 				'<div class="input-group">' .
 				'<span class="input-group-btn"><button class="btn btn-secondary" type="button" data-toggle="modal" data-href="' . e(route('create-submitter', ['tree' => $WT_TREE->getName()])) . '" data-target="#wt-ajax-modal" data-select-id="' . $id . '" title="' . I18N::translate('Create a submitter') . '"><i class="fas fa-plus"></i></button></span>' .
-				self::formControlSubmitter(GedcomRecord::getInstance($value, $WT_TREE), ['id' => $id, 'name' => $name]) .
+				self::formControlSubmitter($WT_TREE, GedcomRecord::getInstance($value, $WT_TREE), ['id' => $id, 'name' => $name]) .
 				'</div>';
 		} elseif ($fact === 'TEMP') {
 			$html .= Bootstrap4::select(FunctionsEdit::optionsTemples(), $value, ['id' => $id, 'name' => $name]);
@@ -836,7 +818,6 @@ class FunctionsEdit {
 			if ($fact === 'TEXT' || $fact === 'ADDR' || ($fact === 'NOTE' && !$islink)) {
 				$html .= '<div class="input-group">';
 				$html .= '<textarea class="form-control" id="' . $id . '" name="' . $name . '" dir="auto">' . e($value) . '</textarea>';
-				$html .= self::inputAddonKeyboard($id);
 				$html .= '</div>';
 			} else {
 				// If using GEDFact-assistant window
@@ -926,13 +907,7 @@ class FunctionsEdit {
 				break;
 		}
 
-		$html .= '<div id="' . $id . '_description">';
-
-		// pastable values
-		if ($fact === 'FORM' && $upperlevel === 'OBJE') {
-			FunctionsPrint::printAutoPasteLink($id, Config::fileFormats());
-		}
-		$html .= '</div>' . $extra . '</div></div>';
+		$html .= $extra . '</div></div>';
 
 		return $html;
 	}
@@ -1080,6 +1055,7 @@ class FunctionsEdit {
 
 		if (!in_array($fact, Config::nonDateFacts())) {
 			echo self::addSimpleTag('0 DATE', $fact, GedcomTag::getLabel($fact . ':DATE'));
+			echo self::addSimpleTag('0 RELI', $fact, GedcomTag::getLabel($fact . ':RELI'));
 		}
 
 		if (!in_array($fact, Config::nonPlaceFacts())) {
@@ -1157,6 +1133,7 @@ class FunctionsEdit {
 		$FACT = Filter::post($fact);
 		$DATE = Filter::post($fact . '_DATE');
 		$PLAC = Filter::post($fact . '_PLAC');
+		$PLAC = Filter::post($fact . '_RELI');
 		if ($DATE || $PLAC || $FACT && $FACT !== 'Y') {
 			if ($FACT && $FACT !== 'Y') {
 				$gedrec = "\n1 " . $fact . ' ' . $FACT;
@@ -1653,11 +1630,9 @@ class FunctionsEdit {
 					echo self::addSimpleTag('2 ' . $key . ' ' . strtoupper(date('d M Y')), $level1tag);
 				} elseif ($level1tag === '_TODO' && $key === '_WT_USER') {
 					echo self::addSimpleTag('2 ' . $key . ' ' . Auth::user()->getUserName(), $level1tag);
-				} elseif ($level1tag === 'TITL' && strstr($WT_TREE->getPreference('ADVANCED_NAME_FACTS'), $key) !== false) {
-					echo self::addSimpleTag('2 ' . $key, $level1tag);
 				} elseif ($level1tag === 'NAME' && strstr($WT_TREE->getPreference('ADVANCED_NAME_FACTS'), $key) !== false) {
 					echo self::addSimpleTag('2 ' . $key, $level1tag);
-				} elseif ($level1tag !== 'TITL' && $level1tag !== 'NAME') {
+				} elseif ($level1tag !== 'NAME') {
 					echo self::addSimpleTag('2 ' . $key, $level1tag);
 				}
 				// Add level 3/4 tags as appropriate

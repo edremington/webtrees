@@ -24,16 +24,182 @@ use Fisharebest\Webtrees\Html;
 use Fisharebest\Webtrees\I18N;
 use Fisharebest\Webtrees\Module;
 use Fisharebest\Webtrees\Module\ModuleBlockInterface;
+use Fisharebest\Webtrees\Site;
 use Fisharebest\Webtrees\Tree;
 use Fisharebest\Webtrees\User;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Controller for the user/tree's home page.
  */
-class HomePageController extends BaseController {
+class HomePageController extends AbstractBaseController {
+	/**
+	 * Show a form to edit block config options.
+	 *
+	 * @param Request $request
+	 *
+	 * @return Response
+	 * @throws NotFoundHttpException
+	 * @throws AccessDeniedHttpException
+	 */
+	public function treePageBlockEdit(Request $request): Response {
+		/** @var Tree $tree */
+		$tree = $request->attributes->get('tree');
+
+		$block_id = (int) $request->get('block_id');
+		$block    = $this->treeBlock($request);
+		$title    = $block->getTitle() . ' — ' . I18N::translate('Preferences');
+
+		return $this->viewResponse('blocks/edit-config', [
+			'block'      => $block,
+			'block_id'   => $block_id,
+			'cancel_url' => route('tree-page', ['ged' => $tree->getName()]),
+			'title'      => $title,
+		]);
+	}
+
+	/**
+	 * Update block config options.
+	 *
+	 * @param Request $request
+	 *
+	 * @return RedirectResponse
+	 */
+	public function treePageBlockUpdate(Request $request): RedirectResponse {
+		/** @var Tree $tree */
+		$tree     = $request->attributes->get('tree');
+		$block_id = (int) $request->get('block_id');
+		$block    = $this->treeBlock($request);
+
+		$block->configureBlock($block_id);
+
+		return new RedirectResponse(route('tree-page', ['ged' => $tree->getName()]));
+	}
+
+	/**
+	 * Load a block and check we have permission to edit it.
+	 *
+	 * @param Request $request
+	 *
+	 * @return ModuleBlockInterface
+	 * @throws NotFoundHttpException
+	 * @throws AccessDeniedHttpException
+	 */
+	private function treeBlock(Request $request): ModuleBlockInterface {
+		/** @var User $user */
+		$user     = $request->attributes->get('user');
+		$block_id = (int) $request->get('block_id');
+
+		$block_info = Database::prepare(
+			"SELECT module_Name, user_id FROM `##block` WHERE block_id = :block_id"
+		)->execute([
+			'block_id' => $block_id,
+		])->fetchOneRow();
+
+		if ($block_info === null) {
+			throw new NotFoundHttpException;
+		}
+
+		$block = Module::getModuleByName($block_info->module_name);
+
+		if (!$block instanceof ModuleBlockInterface) {
+			throw new NotFoundHttpException;
+		}
+
+		if ($block_info->user_id !== $user->getUserId() && !Auth::isAdmin()) {
+			throw new AccessDeniedHttpException;
+		}
+
+		return $block;
+	}
+
+	/**
+	 * Show a form to edit block config options.
+	 *
+	 * @param Request $request
+	 *
+	 * @return Response
+	 * @throws NotFoundHttpException
+	 * @throws AccessDeniedHttpException
+	 */
+	public function userPageBlockEdit(Request $request): Response {
+		/** @var Tree $tree */
+		$tree = $request->attributes->get('tree');
+
+		$block_id = (int) $request->get('block_id');
+		$block    = $this->userBlock($request);
+		$title    = $block->getTitle() . ' — ' . I18N::translate('Preferences');
+
+		return $this->viewResponse('blocks/edit-config', [
+			'block'      => $block,
+			'block_id'   => $block_id,
+			'cancel_url' => route('user-page', ['ged' => $tree->getName()]),
+			'title'      => $title,
+		]);
+	}
+
+	/**
+	 * Update block config options.
+	 *
+	 * @param Request $request
+	 *
+	 * @return RedirectResponse
+	 */
+	public function userPageBlockUpdate(Request $request): RedirectResponse {
+		/** @var Tree $tree */
+		$tree     = $request->attributes->get('tree');
+		$block_id = (int) $request->get('block_id');
+		$block    = $this->userBlock($request);
+
+		$block->configureBlock($block_id);
+
+		return new RedirectResponse(route('user-page', ['ged' => $tree->getName()]));
+	}
+
+	/**
+	 * Load a block and check we have permission to edit it.
+	 *
+	 * @param Request $request
+	 *
+	 * @return ModuleBlockInterface
+	 * @throws NotFoundHttpException
+	 * @throws AccessDeniedHttpException
+	 */
+	private function userBlock(Request $request): ModuleBlockInterface {
+		/** @var User $user */
+		$user = $request->attributes->get('user');
+
+		$block_id = (int) $request->get('block_id');
+
+		$block_info = Database::prepare(
+			"SELECT module_Name, user_id FROM `##block` WHERE block_id = :block_id"
+		)->execute([
+			'block_id' => $block_id,
+		])->fetchOneRow();
+
+		if ($block_info === null) {
+			throw new NotFoundHttpException('This block does not exist');
+		}
+
+		$block = Module::getModuleByName($block_info->module_name);
+
+		if (!$block instanceof ModuleBlockInterface) {
+			throw new NotFoundHttpException($block_info->module_name . ' is not a block');
+		}
+
+		$block_owner_id = (int) $block_info->user_id;
+
+		if ($block_owner_id !== $user->getUserId() && !Auth::isAdmin()) {
+			throw new AccessDeniedHttpException('You are not allowed to edit this block');
+		}
+
+		return $block;
+	}
+
 	/**
 	 * Show a tree's page.
 	 *
@@ -61,7 +227,6 @@ class HomePageController extends BaseController {
 			'main_blocks' => $main_blocks,
 			'side_blocks' => $side_blocks,
 			'title'       => $title,
-			'tree'        => $tree,
 			'meta_robots' => 'index,follow',
 		]);
 	}
@@ -75,7 +240,7 @@ class HomePageController extends BaseController {
 	 */
 	public function treePageBlock(Request $request): Response {
 		/** @var Tree $tree */
-		$tree = $request->attributes->get('tree');
+		$tree     = $request->attributes->get('tree');
 		$block_id = (int) $request->get('block_id');
 
 		$block = Database::prepare(
@@ -97,7 +262,10 @@ class HomePageController extends BaseController {
 		$ctype      = 'gedcom';
 		$controller = $this;
 
-		$html = $module->getBlock($block_id, true);
+		$html = view('layouts/ajax', [
+			'content' => $module->getBlock($block_id, true),
+		]);
+
 
 		// Use HTTP headers and some jQuery to add debug to the current page.
 		DebugBar::sendDataInHeaders();
@@ -108,9 +276,11 @@ class HomePageController extends BaseController {
 	/**
 	 * Show a form to edit the default blocks for new trees.
 	 *
+	 * @param Request $request
+	 *
 	 * @return Response
 	 */
-	public function treePageDefaultEdit(): Response {
+	public function treePageDefaultEdit(Request $request): Response {
 		$main_blocks = $this->getBlocksForTreePage(-1, Auth::PRIV_NONE, 'main');
 		$side_blocks = $this->getBlocksForTreePage(-1, Auth::PRIV_NONE, 'side');
 		$all_blocks  = $this->getAvailableTreeBlocks();
@@ -231,7 +401,6 @@ class HomePageController extends BaseController {
 			'main_blocks' => $main_blocks,
 			'side_blocks' => $side_blocks,
 			'title'       => $title,
-			'tree'        => $tree,
 		]);
 	}
 
@@ -270,7 +439,9 @@ class HomePageController extends BaseController {
 		$ctype      = 'user';
 		$controller = $this;
 
-		$html = $module->getBlock($block_id, true);
+		$html = view('layouts/ajax', [
+			'content' => $module->getBlock($block_id, true),
+		]);
 
 		// Use HTTP headers and some jQuery to add debug to the current page.
 		DebugBar::sendDataInHeaders();
@@ -281,14 +452,16 @@ class HomePageController extends BaseController {
 	/**
 	 * Show a form to edit the default blocks for new uesrs.
 	 *
+	 * @param Request $request
+	 *
 	 * @return Response
 	 */
-	public function userPageDefaultEdit(): Response {
+	public function userPageDefaultEdit(Request $request): Response {
 		$main_blocks = $this->getBlocksForUserPage(-1, -1, Auth::PRIV_NONE, 'main');
 		$side_blocks = $this->getBlocksForUserPage(-1, -1, Auth::PRIV_NONE, 'side');
 		$all_blocks  = $this->getAvailableUserBlocks();
 		$title       = I18N::translate('Set the default blocks for new users');
-		$url_cancel  = Html::url('admin_users.php', []);
+		$url_cancel  = route('admin-users');
 		$url_save    = route('user-page-default-update');
 
 		return $this->viewResponse('edit-blocks-page', [
@@ -393,7 +566,7 @@ class HomePageController extends BaseController {
 		$side_blocks = $this->getBlocksForUserPage(-1, $user_id, Auth::PRIV_NONE, 'side');
 		$all_blocks  = $this->getAvailableUserBlocks();
 		$title       = I18N::translate('Change the blocks on this user’s “My page”') . ' - ' . e($user->getUserName());
-		$url_cancel  = Html::url('admin_users.php', []);
+		$url_cancel  = route('admin-users');
 		$url_save    = route('user-page-user-update', ['user_id' => $user_id]);
 
 		return $this->viewResponse('edit-blocks-page', [

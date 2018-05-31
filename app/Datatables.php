@@ -75,7 +75,7 @@ class Datatables {
 	 */
 	public static function eventTableAttributes() {
 		return Html::attributes([
-			'class' => 'table table-bordered table-sm table-responsive datatables table-event',
+			'class' => 'table table-bordered table-sm datatables table-event',
 			//'data-columns'   => '[{ type: "text" }, { type: "num" }, { type: "num" }, { type: "text" }]',
 			'data-columns'    => '[null, null, null, null]',
 			'data-info'       => 'false',
@@ -99,6 +99,7 @@ class Datatables {
 			'data-paging'     => 'false',
 			'data-searching'  => 'false',
 			'data-state-save' => 'true',
+			'data-order'      => '[[1, "desc"]]',
 		]);
 	}
 
@@ -109,7 +110,7 @@ class Datatables {
 	 */
 	public static function noteTableAttributes() {
 		return Html::attributes([
-				'class' => 'table table-bordered table-sm table-responsive datatables table-note',
+				'class' => 'table table-bordered table-sm datatables table-note',
 				//'data-columns'   => '[{ type: "text" }, { type: "text" }, { type: "num" }, { type: "num" }, { type: "num" }, { type: "text" }, { sorting: false }]',
 				'data-columns'    => '[null, null, null, null, null, null]',
 				'data-state-save' => 'true',
@@ -123,7 +124,7 @@ class Datatables {
 	 */
 	public static function repositoryTableAttributes() {
 		return Html::attributes([
-			'class' => 'table table-bordered table-sm table-responsive datatables table-repository',
+			'class' => 'table table-bordered table-sm datatables table-repository',
 			//'data-columns'   => '[{ type: "text" }, { type: "num" }, { type: "text" }, { sorting: false }]',
 			'data-columns'    => '[null, null, null]',
 			'data-state-save' => 'true',
@@ -137,27 +138,10 @@ class Datatables {
 	 */
 	public static function sourceTableAttributes() {
 		return Html::attributes([
-			'class' => 'table table-bordered table-sm table-responsive datatables table-source',
+			'class' => 'table table-bordered table-sm datatables table-source',
 			//'data-columns'   => '[{ type: "text" }, { type: "text" }, { type: "num" }, { type: "num" }, { type: "num" }, { type: "num" }, { type: "text" }, { sorting: false }]',
 			'data-columns'    => '[null, null, null, null, null, null, null]',
 			'data-state-save' => 'true',
 		] + self::languageAttributes());
-	}
-
-	/**
-	 * Generate the HTML attributes for a table of surnames.
-	 *
-	 * @return string
-	 */
-	public static function surnameTableAttributes() {
-		return Html::attributes([
-			'class' => 'table table-bordered table-sm table-responsive datatables table-surname',
-			//'data-columns'   => '[{ type: "text" }, { type: "num" }]',
-			'data-columns'    => '[null, null]',
-			'data-info'       => 'false',
-			'data-paging'     => 'false',
-			'data-searching'  => 'false',
-			'data-state-save' => 'true',
-		]);
 	}
 }

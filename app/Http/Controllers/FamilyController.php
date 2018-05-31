@@ -18,7 +18,6 @@ declare(strict_types=1);
 namespace Fisharebest\Webtrees\Http\Controllers;
 
 use Fisharebest\Webtrees\Family;
-use Fisharebest\Webtrees\Individual;
 use Fisharebest\Webtrees\Tree;
 use stdClass;
 use Symfony\Component\HttpFoundation\Request;
@@ -27,7 +26,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Controller for the family page.
  */
-class FamilyController extends BaseController {
+class FamilyController extends AbstractBaseController {
 	/**
 	 * Show a family's page.
 	 *
@@ -64,7 +63,7 @@ class FamilyController extends BaseController {
 		$significant = (object) [
 			'family'     => $family,
 			'individual' => null,
-			'surname'    => ''
+			'surname'    => '',
 		];
 
 		foreach ($family->getSpouses() + $family->getChildren() as $individual) {

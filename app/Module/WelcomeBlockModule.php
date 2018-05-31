@@ -55,7 +55,7 @@ class WelcomeBlockModule extends AbstractModule implements ModuleBlockInterface 
 
 		if (Module::isActiveChart($individual->getTree(), 'pedigree_chart')) {
 			$links[] = [
-				'url'   => Html::url('pedigree.php', ['rootid' => $individual->getXref(), 'ged' => $individual->getTree()->getName()]),
+				'url'   => route('pedigree', ['xref' => $individual->getXref(), 'ged' => $individual->getTree()->getName()]),
 				'title' => I18N::translate('Default chart'),
 				'icon'  => 'icon-pedigree',
 			];
@@ -69,7 +69,7 @@ class WelcomeBlockModule extends AbstractModule implements ModuleBlockInterface 
 
 		if (Site::getPreference('USE_REGISTRATION_MODULE') === '1' && !Auth::check()) {
 			$links[] = [
-				'url'   => Html::url(WT_LOGIN_URL, ['action' => 'register']),
+				'url'   => route('register'),
 				'title' => I18N::translate('Request a new user account'),
 				'icon'  => 'icon-user_add',
 			];

@@ -26,7 +26,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Controller for edit forms and responses.
  */
-class EditSourceController extends BaseController {
+class EditSourceController extends AbstractBaseController {
 	/**
 	 * Show a form to create a new source.
 	 *
@@ -35,11 +35,7 @@ class EditSourceController extends BaseController {
 	 * @return Response
 	 */
 	public function createSource(Request $request): Response {
-		$tree = $request->attributes->get('tree');
-
-		return new Response(view('modals/create-source', [
-			'tree' => $tree,
-		]));
+		return new Response(view('modals/create-source'));
 	}
 
 	/**

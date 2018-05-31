@@ -1,9 +1,8 @@
-<?php use Fisharebest\Webtrees\FontAwesome; ?>
 <?php use Fisharebest\Webtrees\Functions\FunctionsEdit; ?>
 <?php use Fisharebest\Webtrees\I18N; ?>
 <?php use Fisharebest\Webtrees\View; ?>
 
-<?= view('admin/breadcrumbs', ['links' => [route('admin-control-panel') => I18N::translate('Control panel'), 'admin_trees_manage.php' => I18N::translate('Manage family trees'), $title]]) ?>
+<?= view('admin/breadcrumbs', ['links' => [route('admin-control-panel') => I18N::translate('Control panel'), route('admin-trees') => I18N::translate('Manage family trees'), $title]]) ?>
 
 <h1><?= $title ?></h1>
 
@@ -31,22 +30,22 @@
 			<?= I18N::translate('First record') ?>
 		</span>
 		<span class="col-sm-9 select-record select-individual">
-			<?= FunctionsEdit::formControlIndividual($individual1, ['name' => 'xref1', 'class' => 'form-control', 'style' => 'width:100%;']) ?>
+			<?= FunctionsEdit::formControlIndividual($tree, $individual1, ['name' => 'xref1', 'class' => 'form-control', 'style' => 'width:100%;']) ?>
 		</span>
 		<span class="col-sm-9 select-record select-family d-none">
-			<?= FunctionsEdit::formControlFamily($family1, ['name' => 'xref1', 'class' => 'form-control', 'style' => 'width:100%;', 'disabled' => true]) ?>
+			<?= FunctionsEdit::formControlFamily($tree, $family1, ['name' => 'xref1', 'class' => 'form-control', 'style' => 'width:100%;', 'disabled' => true]) ?>
 		</span>
 		<span class="col-sm-9 select-record select-source d-none">
-			<?= FunctionsEdit::formControlSource($source1, ['name' => 'xref1', 'class' => 'form-control', 'style' => 'width:100%;', 'disabled' => true]) ?>
+			<?= FunctionsEdit::formControlSource($tree, $source1, ['name' => 'xref1', 'class' => 'form-control', 'style' => 'width:100%;', 'disabled' => true]) ?>
 		</span>
 		<span class="col-sm-9 select-record select-repository d-none">
-			<?= FunctionsEdit::formControlRepository($repository1, ['name' => 'xref1', 'class' => 'form-control', 'style' => 'width:100%;', 'disabled' => true]) ?>
+			<?= FunctionsEdit::formControlRepository($tree, $repository1, ['name' => 'xref1', 'class' => 'form-control', 'style' => 'width:100%;', 'disabled' => true]) ?>
 		</span>
 		<span class="col-sm-9 select-record select-note d-none">
-			<?= FunctionsEdit::formControlNote($note1, ['name' => 'xref1', 'class' => 'form-control', 'style' => 'width:100%;', 'disabled' => true]) ?>
+			<?= FunctionsEdit::formControlNote($tree, $note1, ['name' => 'xref1', 'class' => 'form-control', 'style' => 'width:100%;', 'disabled' => true]) ?>
 		</span>
 		<span class="col-sm-9 select-record select-media d-none">
-			<?= FunctionsEdit::formControlMediaObject($media2, ['name' => 'xref1', 'class' => 'form-control', 'style' => 'width:100%;', 'disabled' => true]) ?>
+			<?= FunctionsEdit::formControlMediaObject($tree, $media2, ['name' => 'xref1', 'class' => 'form-control', 'style' => 'width:100%;', 'disabled' => true]) ?>
 		</span>
 	</label>
 
@@ -55,22 +54,22 @@
 			<?= I18N::translate('Second record') ?>
 		</span>
 		<span class="col-sm-9 select-record select-individual">
-			<?= FunctionsEdit::formControlIndividual($individual2, ['name' => 'xref2', 'class' => 'form-control', 'style' => 'width:100%;']) ?>
+			<?= FunctionsEdit::formControlIndividual($tree, $individual2, ['name' => 'xref2', 'class' => 'form-control', 'style' => 'width:100%;']) ?>
 		</span>
 		<span class="col-sm-9 select-record select-family d-none">
-			<?= FunctionsEdit::formControlFamily($family2, ['name' => 'xref2', 'class' => 'form-control', 'style' => 'width:100%;', 'disabled' => true]) ?>
+			<?= FunctionsEdit::formControlFamily($tree, $family2, ['name' => 'xref2', 'class' => 'form-control', 'style' => 'width:100%;', 'disabled' => true]) ?>
 		</span>
 		<span class="col-sm-9 select-record select-source d-none">
-			<?= FunctionsEdit::formControlSource($source2, ['name' => 'xref2', 'class' => 'form-control', 'style' => 'width:100%;', 'disabled' => true]) ?>
+			<?= FunctionsEdit::formControlSource($tree, $source2, ['name' => 'xref2', 'class' => 'form-control', 'style' => 'width:100%;', 'disabled' => true]) ?>
 		</span>
 		<span class="col-sm-9 select-record select-repository d-none">
-			<?= FunctionsEdit::formControlRepository($repository2, ['name' => 'xref2', 'class' => 'form-control', 'style' => 'width:100%;', 'disabled' => true]) ?>
+			<?= FunctionsEdit::formControlRepository($tree, $repository2, ['name' => 'xref2', 'class' => 'form-control', 'style' => 'width:100%;', 'disabled' => true]) ?>
 		</span>
 		<span class="col-sm-9 select-record select-note d-none">
-			<?= FunctionsEdit::formControlNote($note2, ['name' => 'xref2', 'class' => 'form-control', 'style' => 'width:100%;', 'disabled' => true]) ?>
+			<?= FunctionsEdit::formControlNote($tree, $note2, ['name' => 'xref2', 'class' => 'form-control', 'style' => 'width:100%;', 'disabled' => true]) ?>
 		</span>
 		<span class="col-sm-9 select-record select-media d-none">
-			<?= FunctionsEdit::formControlMediaObject($media2, ['name' => 'xref2', 'class' => 'form-control', 'style' => 'width:100%;', 'disabled' => true]) ?>
+			<?= FunctionsEdit::formControlMediaObject($tree, $media2, ['name' => 'xref2', 'class' => 'form-control', 'style' => 'width:100%;', 'disabled' => true]) ?>
 		</span>
 	</label>
 
@@ -79,7 +78,7 @@
 		</div>
 		<div class="col-sm-9">
 			<button class="btn btn-primary" type="submit">
-				<?= FontAwesome::decorativeIcon('save') ?>
+				<i class="fas fa-check">
 				<?= I18N::translate('continue') ?>
 			</button>
 		</div>

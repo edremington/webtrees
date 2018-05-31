@@ -61,6 +61,8 @@ class CloudsTheme extends AbstractTheme implements ThemeInterface {
 			'chart-background-f'             => 'e9daf1',
 			'chart-background-m'             => 'b1cff0',
 			'chart-spacing-x'                => 4,
+			'chart-box-x'                    => 260,
+			'chart-box-y'                    => 85,
 			'distribution-chart-high-values' => '95b8e0',
 			'distribution-chart-low-values'  => 'c8e7ff',
 		];
@@ -79,7 +81,7 @@ class CloudsTheme extends AbstractTheme implements ThemeInterface {
 	 *
 	 * @return string
 	 */
-	protected function primaryMenuContent(array $menus) {
+	public function primaryMenuContent(array $menus) {
 		return implode('', array_map(function (Menu $menu) {
 			if (!empty($menu->getSubmenus())) {
 				// Insert a dummy menu / label into the submenu
@@ -97,7 +99,7 @@ class CloudsTheme extends AbstractTheme implements ThemeInterface {
 	 *
 	 * @return string[]
 	 */
-	protected function stylesheets() {
+	public function stylesheets() {
 		return array_merge(parent::stylesheets(), [
 			self::STYLESHEET,
 		]);

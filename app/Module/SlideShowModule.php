@@ -91,7 +91,7 @@ class SlideShowModule extends AbstractModule implements ModuleBlockInterface {
 			$n     = array_rand($all_media);
 			$media = Media::getInstance($all_media[$n], $WT_TREE);
 			$media_file = $media->firstImageFile();
-			if ($media->canShow() && $media !== null && !$media_file->isExternal()) {
+			if ($media->canShow() && $media_file !== null && !$media_file->isExternal()) {
 				// Check if it is linked to a suitable individual
 				foreach ($media->linkedIndividuals('OBJE') as $indi) {
 					if (
@@ -121,8 +121,10 @@ class SlideShowModule extends AbstractModule implements ModuleBlockInterface {
 		}
 
 		if ($template) {
-			if ($ctype === 'gedcom' && Auth::isManager($WT_TREE) || $ctype === 'user' && Auth::check()) {
-				$config_url = Html::url('block_edit.php', ['block_id' => $block_id, 'ged' => $WT_TREE->getName()]);
+			if ($ctype === 'gedcom' && Auth::isManager($WT_TREE)) {
+				$config_url = route('tree-page-block-edit', ['block_id' => $block_id, 'ged' => $WT_TREE->getName()]);
+			} elseif ($ctype === 'user' && Auth::check()) {
+				$config_url = route('user-page-block-edit', ['block_id' => $block_id, 'ged' => $WT_TREE->getName()]);
 			} else {
 				$config_url = '';
 			}
@@ -162,7 +164,7 @@ class SlideShowModule extends AbstractModule implements ModuleBlockInterface {
 	 * @return void
 	 */
 	public function configureBlock($block_id) {
-		if (Filter::postBool('save') && Filter::checkCsrf()) {
+		if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			$this->setBlockSetting($block_id, 'filter', Filter::post('filter', 'indi|event|all', 'all'));
 			$this->setBlockSetting($block_id, 'controls', Filter::postBool('controls'));
 			$this->setBlockSetting($block_id, 'start', Filter::postBool('start'));
@@ -184,6 +186,8 @@ class SlideShowModule extends AbstractModule implements ModuleBlockInterface {
 			$this->setBlockSetting($block_id, 'filter_photo', Filter::postBool('filter_photo'));
 			$this->setBlockSetting($block_id, 'filter_tombstone', Filter::postBool('filter_tombstone'));
 			$this->setBlockSetting($block_id, 'filter_video', Filter::postBool('filter_video'));
+
+			return;
 		}
 
 		$filter   = $this->getBlockSetting($block_id, 'filter', 'all');
@@ -211,46 +215,14 @@ class SlideShowModule extends AbstractModule implements ModuleBlockInterface {
 			'video'       => $this->getBlockSetting($block_id, 'filter_video', '0'),
 		];
 
-		?>
-		<div class="form-control row">
-			<label class="col-sm-3 col-form-label" for="filter">
-				<?= I18N::translate('Show only individuals, events, or all') ?>
-			</label>
-			<div class="col-sm-9">
-				<?= Bootstrap4::select(['indi' => I18N::translate('Individuals'), 'event' => I18N::translate('Facts and events'), 'all' => I18N::translate('All')], $filter, ['id' => 'filter', 'name' => 'filter']) ?>
-			</div>
-		</div>
+		$formats = GedcomTag::getFileFormTypes();
 
-		<fieldset class="form-group">
-			<div class="row">
-				<legend class="col-form-label col-sm-3">
-					<?= GedcomTag::getLabel('TYPE') ?>
-				</legend>
-				<div class="col-sm-9">
-					<?php foreach (GedcomTag::getFileFormTypes() as $typeName => $typeValue): ?>
-						<?= Bootstrap4::checkbox($typeValue, false, ['name' => 'filter_' . $typeName, 'checked' => (bool) $filters[$typeName]]) ?>
-					<?php endforeach ?>
-				</div>
-			</div>
-		</fieldset>
-
-		<div class="form-group row">
-			<label class="col-sm-3 col-form-label" for="controls">
-				<?= I18N::translate('Show slide show controls') ?>
-			</label>
-			<div class="col-sm-9">
-				<?= Bootstrap4::radioButtons('controls', FunctionsEdit::optionsNoYes(), $controls, true) ?>
-			</div>
-		</div>
-
-		<div class="form-group row">
-			<label class="col-sm-3 col-form-label" for="start">
-				<?= I18N::translate('Start slide show on page load') ?>
-			</label>
-			<div class="col-sm-9">
-				<?= Bootstrap4::radioButtons('start', FunctionsEdit::optionsNoYes(), $start, true) ?>
-			</div>
-		</div>
-		<?php
+		echo view('blocks/slide-show-config', [
+			'controls' => $controls,
+			'filter'   => $filter,
+			'filters'  => $filters,
+			'formats'  => $formats,
+			'start'    => $start,
+		]);
 	}
 }

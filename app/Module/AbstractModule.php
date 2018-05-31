@@ -17,7 +17,9 @@ namespace Fisharebest\Webtrees\Module;
 
 use Fisharebest\Webtrees\Auth;
 use Fisharebest\Webtrees\Database;
+use Fisharebest\Webtrees\Theme;
 use Fisharebest\Webtrees\Tree;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Class AbstractModule - common functions for blocks
@@ -35,6 +37,8 @@ abstract class AbstractModule {
 	/** @var string For custom modules - link for support, upgrades, etc. */
 	const CUSTOM_WEBSITE = '';
 
+	protected $layout = 'layouts/default';
+
 	/**
 	 * Create a new module.
 	 *
@@ -47,13 +51,13 @@ abstract class AbstractModule {
 	/**
 	 * Get a block setting.
 	 *
-	 * @param int         $block_id
-	 * @param string      $setting_name
-	 * @param string|null $default_value
+	 * @param int    $block_id
+	 * @param string $setting_name
+	 * @param string $default_value
 	 *
-	 * @return null|string
+	 * @return string
 	 */
-	public function getBlockSetting($block_id, $setting_name, $default_value = null) {
+	public function getBlockSetting($block_id, $setting_name, $default_value = '') {
 		$setting_value = Database::prepare(
 			"SELECT SQL_CACHE setting_value FROM `##block_setting` WHERE block_id = :block_id AND setting_name = :setting_name"
 		)->execute([
@@ -225,5 +229,27 @@ abstract class AbstractModule {
 		} else {
 			return (int) $access_level;
 		}
+	}
+
+	/**
+	 * Create a response object from a view.
+	 *
+	 * @param string  $view_name
+	 * @param mixed[] $view_data
+	 * @param int     $status
+	 *
+	 * @return Response
+	 */
+	protected function viewResponse($view_name, $view_data, $status = Response::HTTP_OK): Response {
+		// Make the view's data available to the layout.
+		$layout_data = $view_data;
+
+		// Render the view
+		$layout_data['content'] = view($view_name, $view_data);
+
+		// Insert the view into the layout
+		$html = view($this->layout, $layout_data);
+
+		return new Response($html, $status);
 	}
 }

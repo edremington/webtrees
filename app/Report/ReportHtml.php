@@ -209,14 +209,9 @@ class ReportHtml extends ReportBase {
 	 * Run the report.
 	 */
 	public function run() {
-		$controller = new PageController;
-		$controller
-			->setPageTitle($this->title)
-			->pageHeader();
-
 		// Setting up the styles
 		echo '<style type="text/css">';
-		echo 'body { font: 10px sans-serif;}';
+		echo '#bodydiv { font: 10px sans-serif;}';
 		foreach ($this->Styles as $class => $style) {
 			echo '.', $class, ' { ';
 			if ($style['font'] == 'dejavusans') {

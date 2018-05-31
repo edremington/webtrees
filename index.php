@@ -20,12 +20,13 @@ namespace Fisharebest\Webtrees;
 use Closure;
 use Fisharebest\Webtrees\Http\Controllers\ErrorController;
 use Fisharebest\Webtrees\Http\Middleware\CheckCsrf;
+use Fisharebest\Webtrees\Http\Middleware\CheckForMaintenanceMode;
 use Fisharebest\Webtrees\Http\Middleware\UseTransaction;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
 use Whoops\Handler\PrettyPageHandler;
 use Whoops\Run;
@@ -42,16 +43,20 @@ $route   = $request->get('route');
 
 try {
 	// Most requests will need the current tree and user.
-	$all_tree_names     = array_keys(Tree::getNameList());
-	$first_tree_name    = current($all_tree_names) ?? '';
-	$previous_tree_name = Session::get('GEDCOM', $first_tree_name);
-	$default_tree_name  = $previous_tree_name ?: Site::getPreference('DEFAULT_GEDCOM');
-	$tree_name          = $request->get('ged', $default_tree_name);
-	$tree               = Tree::findByName($tree_name);
-	Session::put('GEDCOM', $tree_name);
+	$all_trees = Tree::getAll();
+
+	$tree = $all_trees[$request->get('ged')] ?? null;
+
+	// No tree specified/available?  Choose one.
+	if ($tree === null && $method === 'GET') {
+		$tree = $all_trees[Site::getPreference('DEFAULT_GEDCOM')] ?? array_values($all_trees)[0] ?? null;
+	}
 
 	$request->attributes->set('tree', $tree);
-	$request->attributes->set('user', AUth::user());
+	$request->attributes->set('user', Auth::user());
+
+	// Most layouts will require a tree for the page header/footer
+	View::share('tree', $tree);
 
 	// Load the routing table.
 	$routes = require 'routes/web.php';
@@ -59,22 +64,21 @@ try {
 	// Find the action for the selected route
 	$controller_action = $routes[$method . ':' . $route] ?? 'ErrorController@noRouteFound';
 
-	DebugBar::stopMeasure('routing');
 
 	// Create the controller
-	DebugBar::startMeasure('create controller');
-
 	list($controller_name, $action) = explode('@', $controller_action);
 	$controller_class = __NAMESPACE__ . '\\Http\\Controllers\\' . $controller_name;
-	$controller = new $controller_class;
+	$controller       = new $controller_class;
 
-	DebugBar::stopMeasure('create controller');
+	DebugBar::stopMeasure('routing');
 
 	// Note that we can't stop this timer, as running the action will
 	// generate the response - which includes (and stops) the timer
 	DebugBar::startMeasure('controller_action', $controller_action);
 
-	$middleware_stack = [];
+	$middleware_stack = [
+		new CheckForMaintenanceMode,
+	];
 
 	if ($method === 'POST') {
 		$middleware_stack[] = new UseTransaction;
@@ -101,13 +105,13 @@ try {
 		ob_end_clean();
 	}
 
-	if ($ex instanceof HttpExceptionInterface) {
+	if ($ex instanceof HttpException) {
 		// Show a friendly page for expected exceptions.
 		if ($request->isXmlHttpRequest()) {
 			$response = new Response($ex->getMessage(), $ex->getStatusCode());
 		} else {
 			$controller = new ErrorController;
-			$response   = $controller->errorResponse($ex->getMessage());
+			$response   = $controller->errorResponse($ex);
 		}
 	} else {
 		// Show an error page for unexpected exceptions.

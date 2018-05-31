@@ -74,15 +74,6 @@ define('WT_EVENTS_DEAT', 'DEAT|BURI|CREM');
 define('WT_EVENTS_MARR', 'MARR|_NMR');
 define('WT_EVENTS_DIV', 'DIV|ANUL|_SEPR');
 
-// Use these line endings when writing files on the server
-define('WT_EOL', "\r\n");
-
-// Gedcom specification/definitions
-define('WT_GEDCOM_LINE_LENGTH', 255 - strlen(WT_EOL)); // Characters, not bytes
-
-// Used in Google charts
-define('WT_GOOGLE_CHART_ENCODING', 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.');
-
 // For performance, it is quicker to refer to files using absolute paths
 define('WT_ROOT', realpath(dirname(__DIR__)) . DIRECTORY_SEPARATOR);
 
@@ -122,22 +113,16 @@ define('WT_SCRIPT_NAME', basename(Filter::server('SCRIPT_NAME')));
 
 // Convert PHP warnings/notices into exceptions
 set_error_handler(function ($errno, $errstr, $errfile, $errline) {
-	// Ignore errors thar are silenced with '@'
+	// Ignore errors that are silenced with '@'
 	if (error_reporting() & $errno) {
-		throw new ErrorException($errfile . ':' . $errline . ' ' . $errstr, $errno);
+		throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
 	}
 });
 
 DebugBar::startMeasure('init database');
 
 // Load our configuration file, so we can connect to the database
-if (file_exists(WT_ROOT . 'data/config.ini.php')) {
-	// Down for maintenance?
-	if (file_exists(WT_ROOT . 'data/offline.txt')) {
-		header('Location: site-offline.php');
-		exit;
-	}
-} else {
+if (!file_exists(WT_ROOT . 'data/config.ini.php')) {
 	// No config file. Set one up.
 	$url      = Html::url('setup.php', ['route' => 'setup']);
 	$response = new RedirectResponse($url);
@@ -219,10 +204,9 @@ if (!Session::get('initiated')) {
 DebugBar::startMeasure('init tree');
 
 // Set the tree for the page; (1) the request, (2) the session, (3) the site default, (4) any tree
-foreach ([Filter::post('ged'), Filter::get('ged'), Session::get('GEDCOM'), Site::getPreference('DEFAULT_GEDCOM')] as $tree_name) {
+foreach ([Filter::post('ged'), Filter::get('ged'), Site::getPreference('DEFAULT_GEDCOM')] as $tree_name) {
 	$WT_TREE = Tree::findByName($tree_name);
 	if ($WT_TREE) {
-		Session::put('GEDCOM', $tree_name);
 		break;
 	}
 }
@@ -247,39 +231,25 @@ DebugBar::stopMeasure('init i18n');
 define('WT_TIMESTAMP', (int) Database::prepare("SELECT UNIX_TIMESTAMP()")->fetchOne());
 
 // Users get their own time-zone. Visitors get the site time-zone.
-if (Auth::check()) {
-	date_default_timezone_set(Auth::user()->getPreference('TIMEZONE', 'UTC'));
-} else {
-	date_default_timezone_set(Site::getPreference('TIMEZONE', 'UTC'));
+try {
+	if (Auth::check()) {
+		date_default_timezone_set(Auth::user()->getPreference('TIMEZONE'));
+	} else {
+		date_default_timezone_set(Site::getPreference('TIMEZONE'));
+	}
+} catch (ErrorException $ex) {
+	// Server upgrades and migrations can leave us with invalid timezone settings.
+	date_default_timezone_set('UTC');
 }
+
 define('WT_TIMESTAMP_OFFSET', date_offset_get(new DateTime('now')));
 
 define('WT_CLIENT_JD', 2440588 + (int) ((WT_TIMESTAMP + WT_TIMESTAMP_OFFSET) / 86400));
 
-// The login URL must be an absolute URL, and can be user-defined
-if (Site::getPreference('LOGIN_URL') !== '') {
-	define('WT_LOGIN_URL', Site::getPreference('LOGIN_URL'));
-} else {
-	define('WT_LOGIN_URL', WT_BASE_URL . 'login.php');
-}
-
-// If there is no current tree and we need one, then redirect somewhere
-if (WT_SCRIPT_NAME != 'admin_trees_manage.php' && WT_SCRIPT_NAME != 'admin_pgv_to_wt.php' && WT_SCRIPT_NAME != 'login.php' && WT_SCRIPT_NAME != 'logout.php' && WT_SCRIPT_NAME != 'import.php' && WT_SCRIPT_NAME != 'help_text.php' && WT_SCRIPT_NAME != 'action.php') {
-	if (!$WT_TREE || !$WT_TREE->getPreference('imported')) {
-		if (Auth::isAdmin()) {
-			header('Location: admin_trees_manage.php');
-		} else {
-			// We're not an administrator, so we can only log in if there is a tree.
-			if (Auth::id()) {
-				Auth::logout();
-				FlashMessages::addMessage(
-					I18N::translate('This user account does not have access to any tree.')
-				);
-			}
-			header('Location: ' . Html::url(WT_LOGIN_URL, ['url' => $request->getRequestUri()]));
-		}
-		exit;
-	}
+// Redirect to login url
+if (!$WT_TREE && !Auth::check() && WT_SCRIPT_NAME !== 'index.php') {
+	header('Location: ' . route('login', ['url' => $request->getRequestUri()]));
+	exit;
 }
 
 // Update the last-login time no more than once a minute

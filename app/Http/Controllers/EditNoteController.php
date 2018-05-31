@@ -26,7 +26,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Controller for edit forms and responses.
  */
-class EditNoteController extends BaseController {
+class EditNoteController extends AbstractBaseController {
 	/**
 	 * Show a form to create a new note object.
 	 *
@@ -35,11 +35,7 @@ class EditNoteController extends BaseController {
 	 * @return Response
 	 */
 	public function createNoteObject(Request $request): Response {
-		$tree = $request->attributes->get('tree');
-
-		return new Response(view('modals/create-note-object', [
-			'tree' => $tree,
-		]));
+		return new Response(view('modals/create-note-object'));
 	}
 
 	/**
@@ -57,7 +53,7 @@ class EditNoteController extends BaseController {
 		$edit_restriction    = $request->get('edit-restriction', '');
 
 		// Convert line endings to GEDDCOM continuations
-		$note = str_replace(["\r\n", "\r", "\n"], "\n1 CONT ", $note);
+		$note = preg_replace('/\r|\r\n|\n|\r/', "\n1 CONT ", $note);
 
 		$gedcom = '0 @XREF@ NOTE ' . $note;
 

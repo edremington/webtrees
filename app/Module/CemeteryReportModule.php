@@ -18,6 +18,7 @@ namespace Fisharebest\Webtrees\Module;
 use Fisharebest\Webtrees\Auth;
 use Fisharebest\Webtrees\I18N;
 use Fisharebest\Webtrees\Menu;
+use Fisharebest\Webtrees\Tree;
 
 /**
  * Class CemeteryReportModule
@@ -49,14 +50,14 @@ class CemeteryReportModule extends AbstractModule implements ModuleReportInterfa
 	/**
 	 * Return a menu item for this report.
 	 *
+	 * @param Tree $tree
+	 *
 	 * @return Menu
 	 */
-	public function getReportMenu() {
-		global $WT_TREE;
-
+	public function getReportMenu(Tree $tree): Menu {
 		return new Menu(
 			$this->getTitle(),
-			'reportengine.php?ged=' . $WT_TREE->getNameUrl() . '&amp;action=setup&amp;report=' . WT_MODULES_DIR . $this->getName() . '/report.xml',
+			e(route('report-setup', ['ged' => $tree->getName(), 'report' => $this->getName()])),
 			'menu-report-' . $this->getName(),
 			['rel' => 'nofollow']
 		);

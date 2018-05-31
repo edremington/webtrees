@@ -20,7 +20,11 @@ use Fisharebest\Webtrees\Database;
 use Fisharebest\Webtrees\Filter;
 use Fisharebest\Webtrees\Functions\FunctionsDate;
 use Fisharebest\Webtrees\I18N;
+use Fisharebest\Webtrees\Tree;
 use Fisharebest\Webtrees\User;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Class UserMessagesModule
@@ -37,28 +41,34 @@ class UserMessagesModule extends AbstractModule implements ModuleBlockInterface 
 	}
 
 	/**
-	 * This is a general purpose hook, allowing modules to respond to routes
-	 * of the form module.php?mod=FOO&mod_action=BAR
+	 * Delete one or messages belonging to a user.
 	 *
-	 * @param string $mod_action
+	 * @param Request $request
+	 *
+	 * @return Response
 	 */
-	public function modAction($mod_action) {
-		switch ($mod_action) {
-			case 'delete':
-				$stmt = Database::prepare("DELETE FROM `##message` WHERE user_id = :user_id AND message_id = :message_id");
+	public function postDeleteMessageAction(Request $request): Response {
+		/** @var Tree $tree */
+		$tree = $request->attributes->get('tree');
 
-				foreach (Filter::postArray('message_id') as $id) {
-					$stmt->execute([
-						'message_id' => $id,
-						'user_id'    => Auth::id(),
-					]);
-				}
+		$message_ids = (array) $request->get('message_id', []);
+
+		$stmt = Database::prepare("DELETE FROM `##message` WHERE user_id = :user_id AND message_id = :message_id");
+
+		foreach ($message_ids as $message_id) {
+			$stmt->execute([
+				'message_id' => $message_id,
+				'user_id'    => Auth::id(),
+			]);
 		}
 
-		$ged   = Filter::post('ged');
-		$ctype = Filter::post('ctype', 'user|gedcom', 'user');
+		if ($request->get('ctype') === 'user') {
+			$url = route('user-page', ['ged' => $tree->getName()]);
+		} else {
+			$url = route('tree-page', ['ged' => $tree->getName()]);
+		}
 
-		header('Location: index.php?ged=' . rawurlencode($ged) . '&ctype=' . $ctype);
+		return new RedirectResponse($url);
 	}
 
 	/**
@@ -85,7 +95,8 @@ class UserMessagesModule extends AbstractModule implements ModuleBlockInterface 
 		$content = '';
 		if (!empty($users)) {
 			$url = route('user-page', ['ged' => $WT_TREE->getName()]);
-			$content .= '<form action="message.php" onsubmit="return $(&quot;#to&quot;).val() !== &quot;&quot;">';
+			$content .= '<form onsubmit="return $(&quot;#to&quot;).val() !== &quot;&quot;">';
+			$content .= '<input type="hidden" name="route" value="message">';
 			$content .= '<input type="hidden" name="ged" value="' . e($WT_TREE->getName()) . '">';
 			$content .= '<input type="hidden" name="url" value="' . e($url) . '">';
 			$content .= '<label for="to">' . I18N::translate('Send a message') . '</label>';
@@ -98,11 +109,11 @@ class UserMessagesModule extends AbstractModule implements ModuleBlockInterface 
 			$content .= '<button type="submit">' . I18N::translate('Send') . '</button><br><br>';
 			$content .= '</form>';
 		}
-		$content .= '<form id="messageform" name="messageform" method="post" action="module.php?mod=user_messages&mod_action=delete" data-confirm="' . I18N::translate('Are you sure you want to delete this message? It cannot be retrieved later.') . '" onsubmit="return confirm(this.dataset.confirm);">';
-		$content .= '<input type="hidden" name="ged" value="' . $ctype . '">';
-		$content .= '<input type="hidden" name="ctype" value="' . $WT_TREE->getNameHtml() . '">';
+		$content .= '<form id="messageform" name="messageform" method="post" action="' . e(route('module', ['action' => 'DeleteMessage', 'module' => $this->getName(), 'ctype' => $ctype, 'ged' => $WT_TREE->getName()])) . '" data-confirm="' . I18N::translate('Are you sure you want to delete this message? It cannot be retrieved later.') . '" onsubmit="return confirm(this.dataset.confirm);">';
+		$content .= csrf_field();
+
 		if (!empty($messages)) {
-			$content .= '<table class="list_table"><tr>';
+			$content .= '<table class="list_table w-100"><tr>';
 			$content .= '<th class="list_label">' . I18N::translate('Delete') . '<br><a href="#" onclick="$(\'#block-' . $block_id . ' :checkbox\').prop(\'checked\', true); return false;">' . I18N::translate('All') . '</a></th>';
 			$content .= '<th class="list_label">' . I18N::translate('Subject') . '</th>';
 			$content .= '<th class="list_label">' . I18N::translate('Date sent') . '</th>';
@@ -116,8 +127,7 @@ class UserMessagesModule extends AbstractModule implements ModuleBlockInterface 
 				$content .= '<td class="list_value_wrap">';
 				$user = User::findByIdentifier($message->sender);
 				if ($user) {
-					$content .= $user->getRealNameHtml();
-					$content .= '  - <span dir="auto">' . $user->getEmail() . '</span>';
+					$content .= '<span dir="auto">' . e($user->getRealName()) . '</span> - <span dir="auto">' . $user->getEmail() . '</span>';
 				} else {
 					$content .= '<a href="mailto:' . e($message->sender) . '">' . e($message->sender) . '</a>';
 				}
@@ -128,10 +138,13 @@ class UserMessagesModule extends AbstractModule implements ModuleBlockInterface 
 				if (strpos($message->subject, /* I18N: When replying to an email, the subject becomes “RE: <subject>” */ I18N::translate('RE: ')) !== 0) {
 					$message->subject = I18N::translate('RE: ') . $message->subject;
 				}
+
+				// If this user still exists, show a reply link.
 				if ($user) {
-					$content .= '<a class="btn btn-secondary" href="message.php?to=' . rawurlencode($message->sender) . '&amp;subject=' . rawurlencode($message->subject) . '&amp;ged=' . $WT_TREE->getNameUrl() . '" title="' . I18N::translate('Reply') . '">' . I18N::translate('Reply') . '</a> ';
+					$reply_url = route('message', ['to' => $user->getUserName(), 'subject' => $message->subject, 'ged' => $WT_TREE->getName()]);
+					$content .= '<a class="btn btn-primary" href="' . e($reply_url) . '" title="' . I18N::translate('Reply') . '">' . I18N::translate('Reply') . '</a> ';
 				}
-				$content .= '<button type="button" data-confirm="' . I18N::translate('Are you sure you want to delete this message? It cannot be retrieved later.') . '" onclick="if (confirm(this.dataset.confirm)) {$(\'#messageform :checkbox\').prop(\'checked\', false); $(\'#cb_message' . $message->message_id . '\').prop(\'checked\', true); document.messageform.submit();}">' . I18N::translate('Delete') . '</button></div></td></tr>';
+				$content .= '<button type="button" class="btn btn-danger" data-confirm="' . I18N::translate('Are you sure you want to delete this message? It cannot be retrieved later.') . '" onclick="if (confirm(this.dataset.confirm)) {$(\'#messageform :checkbox\').prop(\'checked\', false); $(\'#cb_message' . $message->message_id . '\').prop(\'checked\', true); document.messageform.submit();}">' . I18N::translate('Delete') . '</button></div></td></tr>';
 			}
 			$content .= '</table>';
 			$content .= '<p><button type="submit">' . I18N::translate('Delete selected messages') . '</button></p>';

@@ -16,12 +16,9 @@
 namespace Fisharebest\Webtrees\Module;
 
 use Fisharebest\Webtrees\Auth;
-use Fisharebest\Webtrees\Bootstrap4;
 use Fisharebest\Webtrees\Filter;
-use Fisharebest\Webtrees\Functions\FunctionsDB;
-use Fisharebest\Webtrees\Functions\FunctionsEdit;
+use Fisharebest\Webtrees\Functions\FunctionsDb;
 use Fisharebest\Webtrees\GedcomTag;
-use Fisharebest\Webtrees\Html;
 use Fisharebest\Webtrees\I18N;
 
 /**
@@ -105,11 +102,7 @@ class OnThisDayModule extends AbstractModule implements ModuleBlockInterface {
 		$sortStyle = $this->getBlockSetting($block_id, 'sortStyle', 'alpha');
 		$events    = $this->getBlockSetting($block_id, 'events', $default_events);
 
-		foreach (['events', 'filter', 'infoStyle', 'sortStyle'] as $name) {
-			if (array_key_exists($name, $cfg)) {
-				$$name = $cfg[$name];
-			}
-		}
+		extract($cfg, EXTR_OVERWRITE);
 
 		$event_array = explode(',', $events);
 
@@ -124,27 +117,23 @@ class OnThisDayModule extends AbstractModule implements ModuleBlockInterface {
 		$startjd = WT_CLIENT_JD;
 		$endjd   = WT_CLIENT_JD;
 
-		$facts = FunctionsDB::getEventsList($startjd, $endjd, $events_filter, $filter, $sortStyle, $WT_TREE);
-
-		$summary = '';
+		$facts = FunctionsDb::getEventsList($startjd, $endjd, $events_filter, $filter, $sortStyle, $WT_TREE);
 
 		if (empty($facts)) {
-			if ($filter) {
-				$summary = I18N::translate('No events for living individuals exist for today.');
-			} else {
-				$summary = I18N::translate('No events exist for today.');
-			}
+			$content = view('blocks/events-empty', [
+				'message' => I18N::translate('No events exist for today.')
+			]);
+		} else {
+			$content = view('blocks/events-' . $infoStyle, [
+					'facts'   => $facts,
+				]);
 		}
 
-		$content = view('blocks/events-' . $infoStyle, [
-				'facts'   => $facts,
-				'summary' => $summary,
-			]
-		);
-
 		if ($template) {
-			if ($ctype === 'gedcom' && Auth::isManager($WT_TREE) || $ctype === 'user' && Auth::check()) {
-				$config_url = Html::url('block_edit.php', ['block_id' => $block_id, 'ged' => $WT_TREE->getName()]);
+			if ($ctype === 'gedcom' && Auth::isManager($WT_TREE)) {
+				$config_url = route('tree-page-block-edit', ['block_id' => $block_id, 'ged' => $WT_TREE->getName()]);
+			} elseif ($ctype === 'user' && Auth::check()) {
+				$config_url = route('user-page-block-edit', ['block_id' => $block_id, 'ged' => $WT_TREE->getName()]);
 			} else {
 				$config_url = '';
 			}
@@ -184,11 +173,13 @@ class OnThisDayModule extends AbstractModule implements ModuleBlockInterface {
 	 * @return void
 	 */
 	public function configureBlock($block_id) {
-		if (Filter::postBool('save') && Filter::checkCsrf()) {
+		if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			$this->setBlockSetting($block_id, 'filter', Filter::postBool('filter'));
 			$this->setBlockSetting($block_id, 'infoStyle', Filter::post('infoStyle', 'list|table', 'table'));
 			$this->setBlockSetting($block_id, 'sortStyle', Filter::post('sortStyle', 'alpha|anniv', 'alpha'));
 			$this->setBlockSetting($block_id, 'events', implode(',', Filter::postArray('events')));
+
+			return;
 		}
 
 		$default_events = implode(',', self::DEFAULT_EVENTS);
@@ -204,43 +195,25 @@ class OnThisDayModule extends AbstractModule implements ModuleBlockInterface {
 		foreach (self::ALL_EVENTS as $event) {
 			$all_events[$event] = GedcomTag::getLabel($event);
 		}
-		?>
 
-		<div class="form-group row">
-			<label class="col-sm-3 col-form-label" for="filter">
-				<?= I18N::translate('Show only events of living individuals') ?>
-			</label>
-			<div class="col-sm-9">
-				<?= Bootstrap4::radioButtons('filter', FunctionsEdit::optionsNoYes(), $filter, true) ?>
-			</div>
-		</div>
+		$info_styles = [
+			'list'  => /* I18N: An option in a list-box */ I18N::translate('list'),
+			'table' => /* I18N: An option in a list-box */ I18N::translate('table'),
+		];
 
-		<div class="form-group row">
-			<label class="col-sm-3 col-form-label" for="events">
-				<?= I18N::translate('Events') ?>
-			</label>
-			<div class="col-sm-9">
-				<?= Bootstrap4::multiSelect($all_events, $event_array, ['id' => 'events', 'name' => 'events[]', 'class' => 'select2']) ?>
-			</div>
-		</div>
+		$sort_styles = [
+			'alpha' => /* I18N: An option in a list-box */ I18N::translate('sort by name'),
+			'anniv' => /* I18N: An option in a list-box */ I18N::translate('sort by date'),
+		];
 
-		<div class="form-group row">
-			<label class="col-sm-3 col-form-label" for="infoStyle">
-				<?= /* I18N: Label for a configuration option */ I18N::translate('Presentation style') ?>
-			</label>
-			<div class="col-sm-9">
-				<?= Bootstrap4::select(['list' => I18N::translate('list'), 'table' => I18N::translate('table')], $infoStyle, ['id' => 'infoStyle', 'name' => 'infoStyle']) ?>
-			</div>
-		</div>
-
-		<div class="form-group row">
-			<label class="col-sm-3 col-form-label" for="sortStyle">
-				<?= /* I18N: Label for a configuration option */ I18N::translate('Sort order') ?>
-			</label>
-			<div class="col-sm-9">
-				<?= Bootstrap4::select(['alpha' => /* I18N: An option in a list-box */ I18N::translate('sort by name'), 'anniv' => /* I18N: An option in a list-box */ I18N::translate('sort by date')], $sortStyle, ['id' => 'sortStyle', 'name' => 'sortStyle']) ?>
-			</div>
-		</div>
-		<?php
+		echo view('blocks/on-this-day-config', [
+			'all_events'  => $all_events,
+			'event_array' => $event_array,
+			'filter'      => $filter,
+			'infoStyle'   => $infoStyle,
+			'info_styles' => $info_styles,
+			'sortStyle'   => $sortStyle,
+			'sort_styles' => $sort_styles,
+		]);
 	}
 }

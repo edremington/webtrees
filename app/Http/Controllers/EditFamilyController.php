@@ -23,13 +23,11 @@ use Fisharebest\Webtrees\Tree;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
  * Controller for edit forms and responses.
  */
-class EditFamilyController extends BaseController {
+class EditFamilyController extends AbstractBaseController {
 	/**
 	 * @param Request $request
 	 *

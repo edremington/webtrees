@@ -21,6 +21,7 @@ use Fisharebest\Webtrees\Auth;
 use Fisharebest\Webtrees\Date;
 use Fisharebest\Webtrees\Fact;
 use Fisharebest\Webtrees\FontAwesome;
+use Fisharebest\Webtrees\Functions\Functions;
 use Fisharebest\Webtrees\Functions\FunctionsDate;
 use Fisharebest\Webtrees\Functions\FunctionsPrint;
 use Fisharebest\Webtrees\Functions\FunctionsPrintFacts;
@@ -41,7 +42,38 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Controller for the individual page.
  */
-class IndividualController extends BaseController {
+class IndividualController extends AbstractBaseController {
+	// Do not show these facts in the expanded chart boxes.
+	const EXCLUDE_CHART_FACTS = [
+		'ADDR',
+		'ALIA',
+		'ASSO',
+		'CHAN',
+		'CHIL',
+		'EMAIL',
+		'FAMC',
+		'FAMS',
+		'HUSB',
+		'NAME',
+		'NOTE',
+		'OBJE',
+		'PHON',
+		'RESI',
+		'RESN',
+		'SEX',
+		'SOUR',
+		'SSN',
+		'SUBM',
+		'TITL',
+		'URL',
+		'WIFE',
+		'WWW',
+		'_EMAIL',
+		'_TODO',
+		'_UID',
+		'_WT_OBJE_SORT',
+	];
+
 	/**
 	 * Show a individual's page.
 	 *
@@ -95,7 +127,7 @@ class IndividualController extends BaseController {
 		if (Auth::isAdmin()) {
 			$user = User::findByIndividual($individual);
 			if ($user) {
-				$user_link = ' —  <a href="admin_users.php?filter=' . e($user->getUserName()) . '">' . e($user->getUserName()) . '</a>';
+				$user_link = ' —  <a href="' . e(route('admin-users', ['filter' => $user->getEmail()])) . '">' . e($user->getUserName()) . '</a>';
 			};
 		}
 
@@ -146,10 +178,44 @@ class IndividualController extends BaseController {
 	}
 
 	/**
+	 * Show additional details for a chart box.
+	 *
+	 * @param Request $request
+	 *
+	 * @return Response
+	 */
+	public function expandChartBox(Request $request): Response {
+		/** @var Tree $tree */
+		$tree       = $request->attributes->get('tree');
+		$xref       = $request->get('xref');
+		$individual = Individual::getInstance($xref, $tree);
+
+		$this->checkIndividualAccess($individual, false);
+
+		$facts = $individual->getFacts();
+		foreach ($individual->getSpouseFamilies() as $family) {
+			foreach ($family->getFacts() as $fact) {
+				$facts[] = $fact;
+			}
+		}
+		Functions::sortFacts($facts);
+
+		$facts = array_filter($facts, function (Fact $fact) {
+			return !in_array($fact->getTag(), self::EXCLUDE_CHART_FACTS);
+		});
+
+		$html = view('expand-chart-box', [
+			'facts' => $facts,
+		]);
+
+		return new Response($html);
+	}
+
+	/**
 	 * Count the (non-pending-delete) name records for an individual.
 	 *
 	 * @param Individual $individual
-	 * @param string     $fat_name
+	 * @param string     $fact_name
 	 *
 	 * @return int
 	 */
@@ -246,8 +312,15 @@ class IndividualController extends BaseController {
 
 		if ($individual->canEdit() && !$fact->isPendingDeletion()) {
 			$edit_links =
-				FontAwesome::linkIcon('delete', I18N::translate('Delete this name'), ['class' => 'btn btn-link', 'href' => '#', 'onclick' => 'return delete_fact("' . I18N::translate('Are you sure you want to delete this fact?') . '", "' . $individual->getXref() . '", "' . $fact->getFactId() . '");']) .
-				FontAwesome::linkIcon('edit', I18N::translate('Edit the name'), ['class' => 'btn btn-link', 'href' => 'edit_interface.php?action=editname&xref=' . $individual->getXref() . '&fact_id=' . $fact->getFactId() . '&ged=' . $individual->getTree()->getNameHtml()]);
+				FontAwesome::linkIcon('delete', I18N::translate('Delete this name'), [
+					'class'   => 'btn btn-link',
+					'href'    => '#',
+					'onclick' => 'return delete_fact("' . I18N::translate('Are you sure you want to delete this fact?') . '", "' . e($individual->getTree()->getName()) . '", "' . e($individual->getXref()) . '", "' . $fact->getFactId() . '");',
+				]) .
+				FontAwesome::linkIcon('edit', I18N::translate('Edit the name'), [
+					'class' => 'btn btn-link',
+					'href'  => 'edit_interface.php?action=editname&xref=' . $individual->getXref() . '&fact_id=' . $fact->getFactId() . '&ged=' . e($individual->getTree()->getName()),
+				]);
 		} else {
 			$edit_links = '';
 		}
@@ -294,7 +367,10 @@ class IndividualController extends BaseController {
 		}
 
 		if ($individual->canEdit() && !$fact->isPendingDeletion()) {
-			$edit_links = FontAwesome::linkIcon('edit', I18N::translate('Edit the gender'), ['class' => 'btn btn-link', 'href' => 'edit_interface.php?action=edit&xref=' . $individual->getXref() . '&fact_id=' . $fact->getFactId() . '&ged=' . $individual->getTree()->getNameHtml()]);
+			$edit_links = FontAwesome::linkIcon('edit', I18N::translate('Edit the gender'), [
+				'class' => 'btn btn-link',
+				'href'  => 'edit_interface.php?action=edit&xref=' . $individual->getXref() . '&fact_id=' . $fact->getFactId() . '&ged=' . e($individual->getTree()->getName()),
+			]);
 		} else {
 			$edit_links = '';
 		}
@@ -353,7 +429,7 @@ class IndividualController extends BaseController {
 		$significant = (object) [
 			'family'     => null,
 			'individual' => $individual,
-			'surname'    => ''
+			'surname'    => '',
 		];
 
 		list($significant->surname) = explode(',', $individual->getSortName());

@@ -17,6 +17,7 @@ namespace Fisharebest\Webtrees;
 
 use Fisharebest\Webtrees\Functions\FunctionsExport;
 use Fisharebest\Webtrees\Functions\FunctionsImport;
+use Fisharebest\Webtrees\Gedcom;
 use PDOException;
 
 /**
@@ -114,15 +115,6 @@ class Tree {
 	 *
 	 * @return string
 	 */
-	public function getNameHtml() {
-		return e($this->name);
-	}
-
-	/**
-	 * The name of this tree
-	 *
-	 * @return string
-	 */
 	public function getNameUrl() {
 		return rawurlencode($this->name);
 	}
@@ -134,15 +126,6 @@ class Tree {
 	 */
 	public function getTitle() {
 		return $this->title;
-	}
-
-	/**
-	 * The title of this tree, with HTML markup
-	 *
-	 * @return string
-	 */
-	public function getTitleHtml() {
-		return '<span dir="auto">' . e($this->title) . '</span>';
 	}
 
 	/**
@@ -323,7 +306,7 @@ class Tree {
 				" ORDER BY g.sort_order, 3"
 			)->execute([Auth::id(), Auth::id()])->fetchAll();
 			foreach ($rows as $row) {
-				self::$trees[] = new self((int) $row->tree_id, $row->tree_name, $row->tree_title);
+				self::$trees[$row->tree_name] = new self((int) $row->tree_id, $row->tree_name, $row->tree_title);
 			}
 		}
 
@@ -594,7 +577,7 @@ class Tree {
 				$buffer = '';
 			}
 		}
-		fwrite($stream, $buffer . '0 TRLR' . WT_EOL);
+		fwrite($stream, $buffer . '0 TRLR' . Gedcom::EOL);
 		$stmt->closeCursor();
 	}
 
@@ -618,7 +601,6 @@ class Tree {
 		// Don’t allow the user to cancel the request. We do not want to be left with an incomplete transaction.
 		ignore_user_abort(true);
 
-		Database::beginTransaction();
 		$this->deleteGenealogyData($this->getPreference('keep_media'));
 		$this->setPreference('gedcom_filename', $filename);
 		$this->setPreference('imported', '0');
@@ -643,7 +625,6 @@ class Tree {
 			"INSERT INTO `##gedcom_chunk` (gedcom_id, chunk_data) VALUES (?, ?)"
 		)->execute([$this->tree_id, $file_data]);
 
-		Database::commit();
 		fclose($fp);
 	}
 
@@ -754,5 +735,40 @@ class Tree {
 		// has a cache of pending changes, we cannot use it to create a
 		// record with a newly created pending change.
 		return GedcomRecord::getInstance($xref, $this, $gedcom);
+	}
+
+	/**
+	 * What is the most significant individual in this tree.
+	 *
+	 * @param User $user
+	 *
+	 * @return Individual
+	 */
+	public function significantIndividual(User $user): Individual {
+		static $individual; // Only query the DB once.
+
+		if (!$individual && $this->getUserPreference($user, 'rootid')) {
+			$individual = Individual::getInstance($this->getUserPreference($user, 'rootid'), $this);
+		}
+		if (!$individual && $this->getUserPreference($user, 'gedcomid')) {
+			$individual = Individual::getInstance($this->getUserPreference($user, 'gedcomid'), $this);
+		}
+		if (!$individual) {
+			$individual = Individual::getInstance($this->getPreference('PEDIGREE_ROOT_ID'), $this);
+		}
+		if (!$individual) {
+			$individual = Individual::getInstance(
+				Database::prepare(
+					"SELECT MIN(i_id) FROM `##individuals` WHERE i_file=?"
+				)->execute([$this->getTreeId()])->fetchOne(),
+				$this
+			);
+		}
+		if (!$individual) {
+			// always return a record
+			$individual = new Individual('I', '0 @I@ INDI', null, $this);
+		}
+
+		return $individual;
 	}
 }

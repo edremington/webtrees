@@ -18,7 +18,6 @@ declare(strict_types=1);
 namespace Fisharebest\Webtrees\Http\Controllers;
 
 use Fisharebest\Webtrees\Fact;
-use Fisharebest\Webtrees\I18N;
 use Fisharebest\Webtrees\Repository;
 use Fisharebest\Webtrees\Tree;
 use Symfony\Component\HttpFoundation\Request;
@@ -27,7 +26,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Controller for the repository page.
  */
-class RepositoryController extends BaseController {
+class RepositoryController extends AbstractBaseController {
 	/**
 	 * Show a repository's page.
 	 *

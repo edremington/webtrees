@@ -1,9 +1,7 @@
 <?php use Fisharebest\Webtrees\Bootstrap4; ?>
-<?php use Fisharebest\Webtrees\FontAwesome; ?>
 <?php use Fisharebest\Webtrees\I18N; ?>
-<?php use Fisharebest\Webtrees\View; ?>
 
-<?= view('admin/breadcrumbs', ['links' => [route('admin-control-panel') => I18N::translate('Control panel'), 'admin_trees_manage.php' => I18N::translate('Manage family trees'), $title]]) ?>
+<?= view('admin/breadcrumbs', ['links' => [route('admin-control-panel') => I18N::translate('Control panel'), route('admin-trees') => I18N::translate('Manage family trees'), $title]]) ?>
 
 <h1><?= $title ?></h1>
 
@@ -17,28 +15,14 @@
 			<label for="from">
 				<?= /* I18N: From date1 (To date2) */ I18N::translate('From') ?>
 			</label>
-			<div class="input-group date">
-				<input type="text" autocomplete="off" class="form-control" id="from" name="from" value="<?= e($from) ?>">
-				<div class="input-group-append">
-					<span class="input-group-text">
-						<span class="fas fa-calendar-alt"></span>
-					</span>
-				</div>
-			</div>
+			<input type="date" class="form-control" id="from" max="<?= e($latest) ?>" min="<?= e($earliest) ?>" name="from" value="<?= e($from) ?>" required>
 		</div>
 
 		<div class="form-group col-xs-6 col-md-3">
 			<label for="to">
 				<?= /* I18N: (From date1) To date2 */ I18N::translate('To') ?>
 			</label>
-			<div class="input-group date">
-				<input type="text" autocomplete="off" class="form-control" id="to" name="to" value="<?= e($to) ?>">
-				<div class="input-group-append">
-				<span class="input-group-text">
-					<span class="fas fa-calendar-alt"></span>
-				</span>
-				</div>
-			</div>
+			<input type="date" class="form-control" id="to" max="<?= e($latest) ?>" min="<?= e($earliest) ?>"  name="to" value="<?= e($to) ?>" required>
 		</div>
 
 		<div class="form-group col-xs-6 col-md-3">
@@ -88,17 +72,17 @@
 
 	<div class="text-center">
 		<button type="submit" class="btn btn-primary">
-			<?= FontAwesome::decorativeIcon('search') ?>
+			<i class="fas fa-search">
 			<?= I18N::translate('search') ?>
 		</button>
 
 		<button type="submit" class="btn btn-secondary" onclick="document.logs.action.value='export';return true;" <?= $action === 'show' ? '' : 'disabled' ?>>
-			<?= FontAwesome::decorativeIcon('download') ?>
+			<i class="fas fa-download">
 			<?= /* I18N: A button label. */ I18N::translate('download') ?>
 		</button>
 
 		<button type="submit" class="btn btn-danger" data-confirm="<?= I18N::translate('Permanently delete these records?') ?>" onclick="if (confirm(this.dataset.confirm)) {document.logs.action.value='delete'; return true;} else {return false;}" <?= $action === 'show' ? '' : 'disabled' ?>>
-			<?= FontAwesome::decorativeIcon('delete') ?>
+			<i class="fas fa-trash-alt"
 			<?= I18N::translate('delete') ?>
 		</button>
 	</div>
@@ -127,27 +111,3 @@
 		</thead>
 	</table>
 <?php endif ?>
-
-<?php View::push('javascript') ?>
-<script>
-  'use strict';
-
-  $("#from, #to").parent("div").datetimepicker({
-    format: "YYYY-MM-DD",
-    minDate: <?= json_encode($earliest) ?>,
-    maxDate: <?= json_encode($latest) ?>,
-    locale: <?= json_encode(WT_LOCALE) ?>,
-    useCurrent: false,
-    icons: {
-      time: "far fa-clock",
-      date: "fas fa-calendar-alt",
-      up: "fas fa-arrow-up",
-      down: "fas fa-arrow-down",
-      previous: "fas fa-arrow- <?= I18N::direction() === 'rtl' ? 'right' : 'left' ?>",
-      next: "fas fa-arrow- <?= I18N::direction() === 'rtl' ? 'left' : 'right' ?>",
-      today: "far fa-trash-alt",
-      clear: "far fa-trash-alt"
-    }
-  });
-</script>
-<?php View::endpush() ?>

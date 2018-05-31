@@ -26,7 +26,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Controller for edit forms and responses.
  */
-class EditSubmitterController extends BaseController {
+class EditSubmitterController extends AbstractBaseController {
 	/**
 	 * Show a form to create a new submitter.
 	 *
@@ -35,11 +35,7 @@ class EditSubmitterController extends BaseController {
 	 * @return Response
 	 */
 	public function createSubmitter(Request $request): Response {
-		$tree = $request->attributes->get('tree');
-
-		return new Response(view('modals/create-submitter', [
-			'tree' => $tree,
-		]));
+		return new Response(view('modals/create-submitter'));
 	}
 
 	/**

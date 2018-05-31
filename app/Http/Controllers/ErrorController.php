@@ -21,10 +21,10 @@ use Fisharebest\Webtrees\Auth;
 use Fisharebest\Webtrees\Html;
 use Fisharebest\Webtrees\Log;
 use Fisharebest\Webtrees\Tree;
-use HttpException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
 use Whoops\Handler\PlainTextHandler;
 use Whoops\Run;
@@ -32,7 +32,7 @@ use Whoops\Run;
 /**
  * Controller for error handling.
  */
-class ErrorController extends BaseController {
+class ErrorController extends AbstractBaseController {
 	/**
 	 * No route was match?  Send the user somewhere sensible, if we can.
 	 *
@@ -50,29 +50,29 @@ class ErrorController extends BaseController {
 
 		// Not logged in?
 		if (!Auth::check()) {
-			return new RedirectResponse(Html::url('login.php', ['url' => $request->getRequestUri()]));
+			return new RedirectResponse(route('login', ['url' => $request->getRequestUri()]));
 		}
 
 		// No tree or tree not imported?
 		if (Auth::isAdmin()) {
-			return new RedirectResponse(Html::url('admin_trees_manage.php', []));
+			return new RedirectResponse(route('admin-trees'));
 		}
 
-		return $this->viewResponse('errors/no-tree-access', []);
+		return $this->viewResponse('errors/no-tree-access', [ 'title' => '' ]);
 	}
 
 	/**
 	 * Convert an exception into an error message
 	 *
-	 * @param string $error
+	 * @param HttpException $ex
 	 *
 	 * @return Response
 	 */
-	public function errorResponse(string $error): Response {
+	public function errorResponse(HttpException $ex): Response {
 		return $this->viewResponse('alerts/danger', [
 			'title' => 'Error',
-			'alert' => $error,
-			], Response::HTTP_INTERNAL_SERVER_ERROR);
+			'alert' => $ex->getMessage(),
+			], $ex->getStatusCode());
 	}
 
 	/**

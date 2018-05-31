@@ -18,6 +18,7 @@ namespace Fisharebest\Webtrees\Theme;
 use Fisharebest\Webtrees\Auth;
 use Fisharebest\Webtrees\Html;
 use Fisharebest\Webtrees\I18N;
+use Fisharebest\Webtrees\Individual;
 use Fisharebest\Webtrees\Menu;
 use Fisharebest\Webtrees\Tree;
 
@@ -37,7 +38,7 @@ class AdministrationTheme extends AbstractTheme implements ThemeInterface {
 	 *
 	 * @return string[]
 	 */
-	protected function stylesheets() {
+	public function stylesheets() {
 		return array_merge(parent::stylesheets(), [
 			self::STYLESHEET,
 		]);
@@ -48,7 +49,7 @@ class AdministrationTheme extends AbstractTheme implements ThemeInterface {
 	 *
 	 * @return string
 	 */
-	protected function footerContent() {
+	public function footerContent() {
 		return '';
 	}
 
@@ -56,9 +57,11 @@ class AdministrationTheme extends AbstractTheme implements ThemeInterface {
 	 * The admin pages do not have a menu.  All functions are listed
 	 * in the control panel.
 	 *
+	 * @param Individual $individual
+	 *
 	 * @return Menu[]
 	 */
-	protected function primaryMenu() {
+	public function primaryMenu(Individual $individual) {
 		return [];
 	}
 
@@ -67,7 +70,7 @@ class AdministrationTheme extends AbstractTheme implements ThemeInterface {
 	 *
 	 * @return Menu[]
 	 */
-	protected function secondaryMenu() {
+	public function secondaryMenu() {
 		return array_filter([
 			$this->menuPendingChanges(),
 			$this->menuMyPage(),

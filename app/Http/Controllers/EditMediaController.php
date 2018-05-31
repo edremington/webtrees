@@ -42,7 +42,7 @@ use Throwable;
 /**
  * Controller for edit forms and responses.
  */
-class EditMediaController extends BaseController {
+class EditMediaController extends AbstractBaseController {
 	const EDIT_RESTRICTIONS    = ['locked'];
 	const PRIVACY_RESTRICTIONS = ['none', 'privacy', 'confidential'];
 
@@ -103,6 +103,7 @@ class EditMediaController extends BaseController {
 
 		if ($file === '') {
 			FlashMessages::addMessage(I18N::translate('There was an error uploading your file.'));
+
 			return new RedirectResponse($media->url());
 		}
 
@@ -131,10 +132,10 @@ class EditMediaController extends BaseController {
 	 */
 	public function editMediaFile(Request $request): Response {
 		/** @var Tree $tree */
-		$tree     = $request->attributes->get('tree');
-		$xref     = $request->get('xref', '');
-		$fact_id  = $request->get('fact_id', '');
-		$media    = Media::getInstance($xref, $tree);
+		$tree    = $request->attributes->get('tree');
+		$xref    = $request->get('xref', '');
+		$fact_id = $request->get('fact_id', '');
+		$media   = Media::getInstance($xref, $tree);
 
 		try {
 			$this->checkMediaAccess($media);
@@ -265,14 +266,55 @@ class EditMediaController extends BaseController {
 	 * @return Response
 	 */
 	public function createMediaObject(Request $request): Response {
+		/** @var Tree $tree */
 		$tree = $request->attributes->get('tree');
 
 		return new Response(view('modals/create-media-object', [
-			'tree'            => $tree,
 			'max_upload_size' => $this->maxUploadFilesize(),
 			'media_types'     => $this->mediaTypes(),
 			'unused_files'    => $this->unusedFiles($tree),
 		]));
+	}
+
+	/**
+	 * @param Request $request
+	 *
+	 * @return Response
+	 */
+	public function createMediaObjectFromFileAction(Request $request): Response {
+		/** @var Tree $tree */
+		$tree = $request->attributes->get('tree');
+
+		$file  = $request->get('file');
+		$type  = $request->get('type');
+		$title = $request->get('title');
+		$note  = $request->get('note');
+
+		if (preg_match('/\.([a-zA-Z0-9]+)$/', $file, $match)) {
+			$format = ' ' . $match[1];
+		} else {
+			$format = '';
+		}
+
+		$gedcom = "0 @new@ OBJE\n1 FILE " . $file . "\n2 FORM " . $format;
+
+		if ($type !== '') {
+			$gedcom .= "\n3 TYPE " . $type;
+		}
+
+		if ($title !== '') {
+			$gedcom .= "\n2 TITL " . $title;
+		}
+
+		if ($note !== '') {
+			$gedcom .= "\n1 NOTE " . preg_replace('/\r?\n/', "\n2 CONT ", $note);
+		}
+
+		$media_object = $tree->createRecord($gedcom);
+		// Accept the new record.  Rejecting it would leave the filesystem out-of-sync with the genealogy
+		FunctionsImport::acceptAllChanges($media_object->getXref(), $tree->getTreeId());
+
+		return new RedirectResponse($media_object->url());
 	}
 
 	/**
@@ -324,7 +366,7 @@ class EditMediaController extends BaseController {
 		FunctionsImport::acceptAllChanges($record->getXref(), $record->getTree()->getTreeId());
 
 		return new JsonResponse([
-			'id' => $record->getXref(),
+			'id'   => $record->getXref(),
 			'text' => view('selects/media', [
 				'media' => $record,
 			]),
@@ -332,7 +374,7 @@ class EditMediaController extends BaseController {
 				'title' => I18N::translate('The media object has been created'),
 				'name'  => $record->getFullName(),
 				'url'   => $record->url(),
-			])
+			]),
 		]);
 	}
 

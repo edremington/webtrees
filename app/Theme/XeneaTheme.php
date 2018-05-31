@@ -59,6 +59,8 @@ class XeneaTheme extends AbstractTheme implements ThemeInterface {
 		$parameters = [
 			'chart-background-f'             => 'e9daf1',
 			'chart-background-m'             => 'b1cff0',
+			'chart-box-x'                    => 260,
+			'chart-box-y'                    => 85,
 			'distribution-chart-high-values' => '84beff',
 			'distribution-chart-low-values'  => 'c3dfff',
 		];
@@ -75,7 +77,7 @@ class XeneaTheme extends AbstractTheme implements ThemeInterface {
 	 *
 	 * @return string[]
 	 */
-	protected function stylesheets() {
+	public function stylesheets() {
 		return array_merge(parent::stylesheets(), [
 			self::STYLESHEET,
 		]);
